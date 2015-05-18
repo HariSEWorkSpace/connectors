@@ -177,6 +177,8 @@ global class WS_Work_Order{
         webservice  String  TECH_BOPartsOrderRecordId;
         webservice  String  TECH_BOLastUpdateTimestamp;// Data type need to ask
         webservice  String  synchronizationLog;
+		webservice  String  attentionToSESAID;
+		webservice  String  attentionToEmail;
 
         webservice List<PartsOrderLines> PartsOrderLines;
      
@@ -228,6 +230,11 @@ global class WS_Work_Order{
         webservice  String TECH_BOLastUpdateTimestamp; // DataType need to ask      
         webservice  String shipmentMode;
         webservice  String TECH_BOPartsOrderLineRecordId;
+		webservice  String partOrderLineInternalType;
+		webservice  Decimal receivedQuantity;
+		webservice  Date receivedDate;
+		webservice  String returnReason;
+		webservice  String installedProductSerialNumber;
         
 
 
@@ -333,6 +340,12 @@ global class WS_Work_Order{
         webservice  Decimal failedQuantity;
         webservice String workDescription;
         webservice String levelRequired;
+		webservice String partOrderLineType;
+		webservice String genericReference;
+		webservice String freeTextReference;
+		webservice String leftOnsiteQuantity;
+		webservice String notReturnReason;
+		
 
         
 
