@@ -2079,7 +2079,7 @@ global class WS_Work_Order{
                                                     SVMXC__Start_Date_and_Time__c ,SVMXC__End_Date_and_Time__c ,TotalTime__c, SVMXC__Work_Detail__c, ExpenseQuantity__c, LinePricePerUnit__c, 
                                                     CurrencyIsoCode,PartsOrderLine__c,PartsOrderLine__r.TECH_BOPartsOrderLineRecordId__c,PartsOrderLine__r.SKU__c ,PartsOrderLine__r.BOMaterialReference__c,
                                                     PartsOrderLine__r.SVMXC__Product__r.Name,PartsOrderLine__r.SVMXC__Expected_Quantity2__c,ShippedQuantity_del__c,InstalledQuantity__c,FailedQuantity__c,
-                                                    ReturnedQuantity__c from SVMXC__Service_Order_Line__c where SVMXC__Service_Order__c =:workorderMap.keyset() and ( RecordTypeId =:Planned OR RecordTypeId =:serviceproduct OR RecordTypeId =:Parts OR RecordTypeId =:Actuals)]) 
+                                                    ReturnedQuantity__c,Part_Order_Line_Type__c,PartsOrderLine__r.Generic_reference__c,PartsOrderLine__r.Free_text_reference__c,Left_Onsite_Qty__c,Not_Returned_Reason__c from SVMXC__Service_Order_Line__c where SVMXC__Service_Order__c =:workorderMap.keyset() and ( RecordTypeId =:Planned OR RecordTypeId =:serviceproduct OR RecordTypeId =:Parts OR RecordTypeId =:Actuals)]) 
                 {
                     
                     if(woidlistServiceListMap.containskey(sl.SVMXC__Service_Order__c)){                         
@@ -2386,7 +2386,7 @@ global class WS_Work_Order{
                         }
                     
                     }
-                    if(wd.RecordTypeId == Parts){
+                    if(wd.RecordTypeId == Parts &&  wd.PartsOrderLine__c != null){
                     
                         PartsWD p = new PartsWD();
                         p.workOrderbFOID = wd.SVMXC__Service_Order__c;
@@ -2413,6 +2413,11 @@ global class WS_Work_Order{
                         p.workDescription = wd.SVMXC__Work_Description__c;
                         p.expectedQuantity = wd.PartsOrderLine__r.SVMXC__Expected_Quantity2__c;
                         p.levelRequired = wd.Level_Required__c;// May Release 2015
+						p.partOrderLineType = wd.Part_Order_Line_Type__c;
+						p.genericReference = wd.PartsOrderLine__r.Generic_reference__c;
+						p.freeTextReference =  wd.PartsOrderLine__r.Free_text_reference__c;
+						p.leftOnsiteQuantity = wd.Left_Onsite_Qty__c;
+						p.notReturnReason =	wd.Not_Returned_Reason__c;
                         PartsWDs.add(p);
                     
                     }
