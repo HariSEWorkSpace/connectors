@@ -900,8 +900,13 @@ global class WS_Service_Contract{
                     {
                         sctoupdated.Requestcancellationby__c  =userSESAMap.get(request.requestCancellationUserSESA).id;   
                     }
-                    
+                    System.debug('*************'+sctoupdated);
                     Database.SaveResult header_result = CreateOrUpdateServices((List<Sobject>)new List<SVMXC__Service_Contract__c>{sctoupdated},'UPDATE')[0];
+					System.debug('*************'+[select id, name,SVMXC__Service_Contract_Notes__c,SoldtoAccount__c,DefaultInstalledAtAccount__c,BillToAccount__c,
+                                                        SVMXC__Start_Date__c,SVMXC__End_Date__c,SVMXC__Contract_Price2__c,CurrencyIsoCode,IsEvergreen__c,
+                                                        LeadingBusinessBU__c,SendCustomerRenewalNotification__c,OwnerId,SVMXC__Sales_Rep__c,Status__c,PODate__c,
+                                                        PONumber__c,InitialOpportunity__c,SVMXC__Contact__c,SVMXC__Renewed_From__c,SVMXC__Renewal_Notes__c,
+                                                        CountryofBackOffice__c,BackOfficeSystem__c,BackOfficeReference__c,RecordTypeId from SVMXC__Service_Contract__c where id = : request.bFOcontractID]);
                     String HErroMessage ='';
                     Boolean HeaderSuccess = false;
                     if (!header_result.isSuccess()) {
