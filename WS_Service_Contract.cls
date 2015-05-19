@@ -446,11 +446,14 @@ global class WS_Service_Contract{
 													else if(cpu.InstalledProductGoldenID != null && cpu.InstalledProductGoldenID!='' /*&& ipObjGoldenIdMap.containskey(cpu.InstalledProductGoldenID)*/){
 														System.debug('\n !!!!!!');
 														tempcp.add(cpu);                                        
-													}
-													else if(cpu.shippedSerialNumber != null && cpu.shippedSerialNumber !='' && cpu.productbFOID != null){
+                                                    }else if (cpu.productbFOID != null){ // Yassine B 18/05/2015 (wide condition about shippedSerialNumber and productbFOID)- START
+                                                        System.debug('\n !!!!!!');
+														tempcp.add(cpu);   
+                                                    }
+													else if(cpu.shippedSerialNumber != null && cpu.shippedSerialNumber !=''){
 														System.debug('\n !!!!!!');
 														tempcp.add(cpu);    
-													}
+													}// Yassine B 18/05/2015 (wide condition about shippedSerialNumber and productbFOID)- END
 													else{
 														System.debug('\n !!!!!!');
 														CoveredProductResult errcpr = new CoveredProductResult();
@@ -1285,11 +1288,14 @@ global class WS_Service_Contract{
                                                         tempcp.add(cpu);
                                                     else if(cpu.InstalledProductGoldenID != null && cpu.InstalledProductGoldenID!='' && ipObjGoldenIdMap.containskey(cpu.InstalledProductGoldenID)){
                                                         tempcp.add(cpu);                                        
+                                                    }else if (cpu.productbFOID != null){ // Yassine B 18/05/2015 (wide condition about shippedSerialNumber and productbFOID)- START
+                                                        System.debug('\n !!!!!!');
+														tempcp.add(cpu);   
                                                     }
-                                                    else if(cpu.shippedSerialNumber != null && cpu.shippedSerialNumber !='' && cpu.productbFOID != null){
-                                                    
-                                                        tempcp.add(cpu);    
-                                                    }
+													else if(cpu.shippedSerialNumber != null && cpu.shippedSerialNumber !=''){
+														System.debug('\n !!!!!!');
+														tempcp.add(cpu);    
+													}// Yassine B 18/05/2015 (wide condition about shippedSerialNumber and productbFOID)- END
                                                     else{
                                                     
                                                         CoveredProductResult errcpr = new CoveredProductResult();
