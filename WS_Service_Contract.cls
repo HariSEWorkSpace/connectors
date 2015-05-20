@@ -1128,6 +1128,9 @@ global class WS_Service_Contract{
                                         }
                                         else if(cpunit.InstalledProductbFOID != null && ipidCpMap.containskey(cpunit.InstalledProductbFOID)){
                                             cpObject = ipidCpMap.get(cpunit.InstalledProductbFOID);     
+                                        }
+										else if(cpunit.BOReferenceCoveredProduct != null && boffrefCpMap.containskey(cpunit.BOReferenceCoveredProduct)){
+                                            cpObject = boffrefCpMap.get(cpunit.BOReferenceCoveredProduct);     
                                         }										
                                         if(cpObject!= null)
                                         {                                       
