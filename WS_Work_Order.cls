@@ -1276,11 +1276,11 @@ global class WS_Work_Order{
 			LineType = 'RMA';
 		}
        
-		
+		// Yassine B 19/05/2015 BR-7677 : Added more fields in QUERY
         List<SVMXC__RMA_Shipment_Order__c> partsOrderList = [select id, Name,SVMXC__Order_Status__c,Service_level__c,SVMXC__Shipping_Receiving_Notes__c,Freight_terms__c,Parts_SLA_terms__c,On_site_SLA_terms__c,SVMXC__Contact__c,SVMXC__Contact__r.SEContactID__c,SVMXC__Contact__r.FirstName,SVMXC__Contact__r.LocalFirstName__c,SVMXC__Contact__r.MidInit__c,
         SVMXC__Contact__r.LocalMidInit__c,SVMXC__Contact__r.LastName,SVMXC__Contact__r.LocalLastName__c,SVMXC__Contact__r.Email,SVMXC__Contact__r.MobilePhone,SVMXC__Contact__r.WorkPhone__c,
         Ship_to__r.SEAccountID__c,Ship_to__r.Name,Ship_to__r.AccountLocalName__c,Ship_to__r.Street__c,Ship_to__r.StreetLocalLang__c,Ship_to__r.AdditionalAddress__c,Ship_to__r.LocalAdditionalAddress__c,Ship_to__r.ZipCode__c,Ship_to__r.City__c,Ship_to__r.LocalCity__c,Ship_to__r.Country__r.CountryCode__c,Ship_to__r.StateProvince__c,Ship_to__c,Attention_To__r.FederationIdentifier,Attention_To__r.Email,
-        Ship_to__r.RecordType.Name,Ship_to__r.StateProvince__r.StateProvinceCode__c,RecordType.Name from SVMXC__RMA_Shipment_Order__c where SVMXC__Service_Order__c = : wo.id AND SVMXC__Order_Status__c='Open' and RecordTypeId =:partsorderrtId ];
+        Ship_to__r.RecordType.Name,Ship_to__r.StateProvince__r.StateProvinceCode__c,RecordType.Name, To_Name__c, SVMXC__Destination_Street__c, SVMXC__Destination_Zip__c, SVMXC__Destination_City__c,To_Country__r.CountryCode__c,To_State__r.StateProvinceCode__c  from SVMXC__RMA_Shipment_Order__c where SVMXC__Service_Order__c = : wo.id AND SVMXC__Order_Status__c='Open' and RecordTypeId =:partsorderrtId ];
 		
         System.debug('\n WWS Log: '+partsOrderList.size());
 		
@@ -1327,24 +1327,33 @@ global class WS_Work_Order{
                 c.mobilePhone = porder.SVMXC__Contact__r.MobilePhone;
                 c.workPhone = porder.SVMXC__Contact__r.WorkPhone__c;
                 pou.contact = c;
-                Account a = new Account();              
-                a.GoldenID = porder.Ship_to__r.SEAccountID__c;
-                a.AddAddressInfo = porder.Ship_to__r.AccountLocalName__c;
-                a.NameLocal = porder.Ship_to__r.AccountLocalName__c;
-                a.Street = porder.Ship_to__r.Street__c;
-                a.StreetLocal = porder.Ship_to__r.StreetLocalLang__c;
-                a.AddAddressInfo = porder.Ship_to__r.AdditionalAddress__c;
-                a.AddAddressInfoLocal = porder.Ship_to__r.LocalAdditionalAddress__c;
-                a.ZipCode = porder.Ship_to__r.ZipCode__c;
-                a.City = porder.Ship_to__r.City__c;
-                a.LocalCity = porder.Ship_to__r.LocalCity__c;
-                a.CountryCode = porder.Ship_to__r.Country__r.CountryCode__c;
-                a.StateProvinceCode = porder.Ship_to__r.StateProvince__r.StateProvinceCode__c;
-                a.recordTypeName = porder.Ship_to__r.RecordType.Name;
-                a.bFOID = porder.Ship_to__c;
-                a.Name = porder.Ship_to__r.Name;
-                
-                
+                Account a = new Account();   
+                // Yassine B 19/05/2015 BR-7677   -- START
+                if(porder.Ship_to__c != null){ 
+                    a.GoldenID = porder.Ship_to__r.SEAccountID__c;
+                    a.AddAddressInfo = porder.Ship_to__r.AccountLocalName__c;
+                    a.NameLocal = porder.Ship_to__r.AccountLocalName__c;
+                    a.Street = porder.Ship_to__r.Street__c;
+                    a.StreetLocal = porder.Ship_to__r.StreetLocalLang__c;
+                    a.AddAddressInfo = porder.Ship_to__r.AdditionalAddress__c;
+                    a.AddAddressInfoLocal = porder.Ship_to__r.LocalAdditionalAddress__c;
+                    a.ZipCode = porder.Ship_to__r.ZipCode__c;
+                    a.City = porder.Ship_to__r.City__c;
+                    a.LocalCity = porder.Ship_to__r.LocalCity__c;
+                    a.CountryCode = porder.Ship_to__r.Country__r.CountryCode__c;
+                    a.StateProvinceCode = porder.Ship_to__r.StateProvince__r.StateProvinceCode__c;
+                    a.recordTypeName = porder.Ship_to__r.RecordType.Name;
+                    a.bFOID = porder.Ship_to__c;
+                    a.Name = porder.Ship_to__r.Name;
+                }else{
+                    a.name=porder.To_Name__c;
+                    a.Street=porder.SVMXC__Destination_Street__c;
+                    a.ZipCode=porder.SVMXC__Destination_Zip__c;
+                    a.City=porder.SVMXC__Destination_Zip__c;
+                    a.CountryCode=porder.To_Country__r.CountryCode__c;
+                    a.StateProvinceCode=porder.To_State__r.StateProvinceCode__c;
+                }
+                 // Yassine B 19/05/2015 BR-7677   -- END
                 pou.shipToAccount = a;
                 pou.PartsOrderLines = new List<PartsOrderLines>();
                 if(porderLineMap.containskey(porder.id))
