@@ -778,12 +778,12 @@ global class WS_Service_Contract{
                     isCheck = false;
                     isCheckPass = false;
                 }
-                /*
+                
                 if(usl.SKUComRef == null || usl.SKUComRef == ''){
                     mandatoryChildFields +='SKUComRef ';
                     isCheck = false;
                     isCheckPass = false;
-                }*/
+                }
                 if(usl.quantity == null ){
                     mandatoryChildFields +='quantity ';
                     isCheck = false;
@@ -939,7 +939,7 @@ global class WS_Service_Contract{
             else
             {            
                 
-                    System.debug('\n Clog: update else condition');
+                    System.debug('\n Clog: Create / update Method ');
                 //{
                         
                         Map<id, SVMXC__Service_Contract__c> slidrecmap = new Map<id,SVMXC__Service_Contract__c>();
@@ -981,9 +981,10 @@ global class WS_Service_Contract{
                                 }
                             }
                             */
-                            
+                            // Service Lines Update Process Starts
                             if(usltoupdate!= null && usltoupdate.size()>0)
                             {
+								System.debug('\n Clog: Service lines update process Started');
                                 System.debug('\n Clog:'+usltoupdate.size());
                                 List<SVMXC__Service_Contract__c> exslList =[select id, name,SVMXC__Service_Contract_Notes__c,SoldtoAccount__c,DefaultInstalledAtAccount__c,BillToAccount__c,
                                                             SVMXC__Start_Date__c,SVMXC__End_Date__c,SVMXC__Contract_Price2__c,CurrencyIsoCode,IsEvergreen__c,
@@ -1046,10 +1047,11 @@ global class WS_Service_Contract{
                                 {
                                     response.ServiceLineResults.addAll(slresuts) ;                                
                                 }*/
+								 //Contract Products Process Starts
                                 Set<id> ipobjidset = new Set<id>();
                                 Set<String> ipobjgidset = new Set<String>();
                                 List<SVMXC__Service_Contract_Products__c> existingCpList = [select id,SVMXC__Start_Date__c, SVMXC__End_Date__c ,BackOfficeReference__c, SVMXC__Installed_Product__c,SVMXC__Installed_Product__r.GoldenAssetId__c,SVMXC__Service_Contract__c from SVMXC__Service_Contract_Products__c where SVMXC__Service_Contract__c in : updateslidset ];
-                                Map<id,List<SVMXC__Service_Contract_Products__c>> slidListCPMap = new Map<id,List<SVMXC__Service_Contract_Products__c>>();
+                                Map<id,List<SVMXC__Service_Contract_Products__c>> slidListCPMap = new Map<id,List<SVMXC__Service_Contract_Products__c>>();//existing covered products
                                 System.debug('\n Clog:'+existingCpList.size());
                                 if(existingCpList!= null && existingCpList.size()>0)
                                 {
@@ -1126,7 +1128,7 @@ global class WS_Service_Contract{
                                         }
                                         else if(cpunit.InstalledProductbFOID != null && ipidCpMap.containskey(cpunit.InstalledProductbFOID)){
                                             cpObject = ipidCpMap.get(cpunit.InstalledProductbFOID);     
-                                        }
+                                        }										
                                         if(cpObject!= null)
                                         {                                       
                                             cpObject.SVMXC__Start_Date__c = cpunit.InstalledProductStartDate;
