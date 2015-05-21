@@ -1930,12 +1930,13 @@ global class WS_Work_Order{
                 mandatory = false;
                 mandatoryFields += mandatoryFields + 'workOrderBOReference';
             }
+			/*
             if(request.workOrderGroupBOReference != null && request.workOrderGroupBOReference !=''){
             }
             else{
                 mandatory = false;
                 mandatoryFields += mandatoryFields + 'workOrderGroupBOReference';
-            }
+            }*/
         }
                 
         if(request.Event != null && request.Event !=''){
@@ -2859,8 +2860,8 @@ global class WS_Work_Order{
              woresult.TECH_WOBackOfficeRecordID = wo.TECH_WOBackOfficeRecordID__c;
              
              woresult.WOGBackOfficeReference =  wo.WorkOrderGroup__r.BackOfficeReference__c;
-             //woresult.TECH_FOLastUpdateTimestamp = wo.TECH_FOLastUpdate_Timestamp__c;
-			 woresult.TECH_FOLastUpdateTimestamp = (wo.TECH_FOLastUpdate_Timestamp__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+             woresult.TECH_FOLastUpdateTimestamp = wo.TECH_FOLastUpdate_Timestamp__c;
+			 //woresult.TECH_FOLastUpdateTimestamp = (wo.TECH_FOLastUpdate_Timestamp__c).formatGMT('yyyy-MM-dd HH:mm:ss');
              woresult.closedOn =  wo.SVMXC__Closed_On__c;
              woresult.plannedDuration =  wo.PlannedServiceDuration__c;
 
