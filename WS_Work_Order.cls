@@ -237,6 +237,8 @@ global class WS_Work_Order{
 		webservice  Date receivedDate;
 		webservice  String returnReason;
 		webservice  String installedProductSerialNumber;
+		webservice  String currencyIsoCode;
+		webservice  Double linePrice;
         
 
 
@@ -1288,7 +1290,7 @@ global class WS_Work_Order{
             porderMap.putAll(partsOrderList);       
             partsOrderLineList = [select  id,Name,SVMXC__RMA_Shipment_Order__c,SVMXC__Line_Type__c,Plant_Name__r.name,SVMXC__Expected_Quantity2__c,UnitofMeasure__c,RequestedDate__c,RecordType.Name,
             Calculated_plant__r.name,Spare_part_category__c,SVMXC__Expected_Ship_Date__c,Lead_Date__c,Free_text_reference__c,Generic_reference__c,Shipment_mode__c,SVMXC__Product__c,SKU__c,
-            BOMaterialReference__c,createdby.FederationIdentifier,createdby.FirstName,createdby.LastName,Available_stock__c,Received_Qty__c,Received_Date__c,Return_Reason__c,SVMXC__Serial_Number__r.SVMXC__Serial_Lot_Number__c from SVMXC__RMA_Shipment_Line__c where SVMXC__RMA_Shipment_Order__c in : porderMap.keyset() AND SVMXC__Line_Type__c =: LineType];			
+            BOMaterialReference__c,createdby.FederationIdentifier,createdby.FirstName,createdby.LastName,Available_stock__c,Received_Qty__c,Received_Date__c,Return_Reason__c,SVMXC__Serial_Number__r.SVMXC__Serial_Lot_Number__c,CurrencyIsoCode,SVMXC__Line_Price2__c from SVMXC__RMA_Shipment_Line__c where SVMXC__RMA_Shipment_Order__c in : porderMap.keyset() AND SVMXC__Line_Type__c =: LineType];			
             System.debug('\n WWS Log: '+partsOrderLineList.size());
             for(SVMXC__RMA_Shipment_Line__c line: partsOrderLineList){
                 if(porderLineMap.containskey(line.SVMXC__RMA_Shipment_Order__c)){
@@ -1392,6 +1394,8 @@ global class WS_Work_Order{
                         polu.createdByLastName = pol.createdby.LastName;
                         polu.shipmentMode = pol.Shipment_mode__c;
                         polu.partOrderLineType = pol.RecordType.Name;
+						polu.currencyIsoCode = pol.CurrencyIsoCode;
+						polu.linePrice = pol.SVMXC__Line_Price2__c;
                         pols.add(polu);
 
                     }
@@ -2855,7 +2859,8 @@ global class WS_Work_Order{
              woresult.TECH_WOBackOfficeRecordID = wo.TECH_WOBackOfficeRecordID__c;
              
              woresult.WOGBackOfficeReference =  wo.WorkOrderGroup__r.BackOfficeReference__c;
-             woresult.TECH_FOLastUpdateTimestamp = wo.TECH_FOLastUpdate_Timestamp__c;
+             //woresult.TECH_FOLastUpdateTimestamp = wo.TECH_FOLastUpdate_Timestamp__c;
+			 woresult.TECH_FOLastUpdateTimestamp = (wo.TECH_FOLastUpdate_Timestamp__c).formatGMT('yyyy-MM-dd HH:mm:ss');
              woresult.closedOn =  wo.SVMXC__Closed_On__c;
              woresult.plannedDuration =  wo.PlannedServiceDuration__c;
 
