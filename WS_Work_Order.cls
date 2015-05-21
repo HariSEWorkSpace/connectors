@@ -1968,7 +1968,7 @@ global class WS_Work_Order{
                SVMXC__Priority__c,SVMXC__Scheduled_Date_Time__c,WorkOrderGroup__c,WorkOrderGroup__r.BackOfficeReference__c,WorkOrderName__c,
                Comments_to_Planner__c,CountryOfBackOffice__c,BackOfficeSystem__c,SVMXC__Order_Status__c,SubStatus__c,Work_Order_Category__c,
                SVMXC__Order_Type__c,WorkOrderSubType__c,IsBillable__c,SVMXC__Billing_Type__c,SVMXC__Group_Member__c,OwnerID,Parent_Work_Order__c,
-               Parent_Work_Order__r.BackOfficeReference__c,SoldToAccount__c,SVMXC__Component__c,SVMXC__Product__c,Project__c,SVMXC__Service_Contract__c,ServiceLine__c,SVMXC__Closed_On__c,
+               Parent_Work_Order__r.BackOfficeReference__c,Parent_Work_Order__r.TECH_WOBackOfficeRecordID__c,SoldToAccount__c,SVMXC__Component__c,SVMXC__Product__c,Project__c,SVMXC__Service_Contract__c,ServiceLine__c,SVMXC__Closed_On__c,
                BackOfficeReference__c,SVMXC__Company__r.SEAccountID__c,SVMXC__Company__r.Name,SVMXC__Company__r.AccountLocalName__c,SVMXC__Company__r.Street__c,
                SVMXC__Company__r.StreetLocalLang__c,SVMXC__Company__r.AdditionalAddress__c,SVMXC__Company__r.LocalAdditionalAddress__c,
                SVMXC__Company__r.ZipCode__c,SVMXC__Company__r.City__c,SVMXC__Company__r.LocalCity__c,SVMXC__Company__r.Country__r.CountryCode__c,
@@ -2065,7 +2065,7 @@ global class WS_Work_Order{
                SVMXC__Priority__c,SVMXC__Scheduled_Date_Time__c,WorkOrderGroup__c,WorkOrderGroup__r.BackOfficeReference__c,WorkOrderName__c,
                Comments_to_Planner__c,CountryOfBackOffice__c,BackOfficeSystem__c,SVMXC__Order_Status__c,SubStatus__c,Work_Order_Category__c,
                SVMXC__Order_Type__c,WorkOrderSubType__c,IsBillable__c,SVMXC__Billing_Type__c,SVMXC__Group_Member__c,OwnerID,Parent_Work_Order__c,
-               Parent_Work_Order__r.BackOfficeReference__c,SoldToAccount__c,SVMXC__Component__c,SVMXC__Product__c,Project__c,SVMXC__Service_Contract__c,ServiceLine__c,SVMXC__Closed_On__c,
+               Parent_Work_Order__r.BackOfficeReference__c,Parent_Work_Order__r.TECH_WOBackOfficeRecordID__c,SoldToAccount__c,SVMXC__Component__c,SVMXC__Product__c,Project__c,SVMXC__Service_Contract__c,ServiceLine__c,SVMXC__Closed_On__c,
                BackOfficeReference__c,SVMXC__Company__r.SEAccountID__c,SVMXC__Company__r.Name,SVMXC__Company__r.AccountLocalName__c,SVMXC__Company__r.Street__c,
                SVMXC__Company__r.StreetLocalLang__c,SVMXC__Company__r.AdditionalAddress__c,SVMXC__Company__r.LocalAdditionalAddress__c,
                SVMXC__Company__r.ZipCode__c,SVMXC__Company__r.City__c,SVMXC__Company__r.LocalCity__c,SVMXC__Company__r.Country__r.CountryCode__c,
@@ -2852,7 +2852,9 @@ global class WS_Work_Order{
              woresult.soldToAccountbFOID = wo.SoldToAccount__c;
             //woresult.mainInstalledProduct = String.valueOf(wo.SVMXC__Component__c);
              woresult.productbFOID = String.valueOf(wo.SVMXC__Product__c);
-             woresult.parentWOBackOfficeReference = wo.Parent_Work_Order__r.BackOfficeReference__c;
+			 // QC 11658
+             //woresult.parentWOBackOfficeReference = wo.Parent_Work_Order__r.BackOfficeReference__c;
+			 woresult.parentWOBackOfficeReference = wo.Parent_Work_Order__r.TECH_WOBackOfficeRecordID__c;
              woresult.caseNumber = wo.SVMXC__Case__r.CaseNumber;
 
              woresult.WOBackOfficeReference = wo.BackOfficeReference__c;
