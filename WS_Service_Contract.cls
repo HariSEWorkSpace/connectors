@@ -521,7 +521,18 @@ global class WS_Service_Contract{
 											
 											if(cplist!= null && cplist.size()>0){
 												System.debug('\n CLog: cp list '+cplist);
-												AP_IPAssociationHandler.attachIPForConcurrentOrders(cplist);
+												// For defect QC 11653
+												// Start
+												try{
+													AP_IPAssociationHandler.attachIPForConcurrentOrders(cplist);
+												}
+												catch(exception ex){
+													
+													Database.rollback(sp);
+													RollBackProcess('CREATE');
+													response.errorMessage +=ex.getMessage();
+												}
+												// End
 												System.debug('\n CLog: cp list ');
 											}
 										
