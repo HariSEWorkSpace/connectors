@@ -541,13 +541,32 @@ global class WS_Work_Order{
             Set<Id> accidSet = new Set<id>();
             List<SVMXC__Service_Order__c> existingwolist = new List<SVMXC__Service_Order__c>();
             List<WorkOrder> WorkOrderListToProcess = new List<WorkOrder>();
+			List<WorkOrder> WorkOrderMandatoryPass = new List<WorkOrder>();
             Map<String,SVMXC__Service_Order__c> existingMap = new Map<String,SVMXC__Service_Order__c>();
             
             RecordType rt =[SELECT Description,DeveloperName,Id,Name,SobjectType FROM RecordType where SobjectType='SVMXC__Service_Order__c' and DeveloperName ='WO_ConnectedWorkOrder'];
             if(WorkOrderList != null){
+				
+				for(WorkOrder wu: WorkOrderList){	
+					MandatoryFields mf = new MandatoryFields();
+					 mf = CreateMandataryCheck(wu);
+					if( mf.isMFPass)
+					{					
+						WorkOrderMandatoryPass.add(wu);
+					}
+					else{					
+					  WorkOrderResult wor = new WorkOrderResult();
+                      wor.success = false;
+                      wor.type = 'CREATED';                     
+                      wor.errorMessage =' Mandatory Fields are missing '+ mf.fields;
+                      worList.add(wor);					
+					}				
+				}
+			
+			
                 Set<String> setsystem = new Set<String>();
                 Set<String> setbref = new Set<String>();
-                for(WorkOrder wou: WorkOrderList){
+                for(WorkOrder wou: WorkOrderMandatoryPass){
                     if(wou.WOBackOfficeReference != null && wou.WOBackOfficeReference !=''){
                         setbref.add(wou.WOBackOfficeReference);
                     }
@@ -578,7 +597,7 @@ global class WS_Work_Order{
                         }
                      }  
                 }
-                for(WorkOrder wou: WorkOrderList){
+                for(WorkOrder wou: WorkOrderMandatoryPass){
                     if(!existingMap.containskey(wou.backOfficeSystem+wou.WOBackOfficeReference))
                      WorkOrderListToProcess.add(wou);
                      else{
@@ -602,8 +621,7 @@ global class WS_Work_Order{
                      
                       wor.errorMessage = ' Please send request ';
                       worList.add(wor);
-                      return worList;
-                      
+                      return worList;                     
                      
             }
             
@@ -1905,11 +1923,100 @@ global class WS_Work_Order{
         return result;
         
     }
+	
+	
     public class MandatoryFields{
         public Boolean isMFPass{get;set;}
         public String fields{get;set;}
         
     }
+	
+	public static MandatoryFields CreateMandataryCheck(WorkOrder request){
+		MandatoryFields mf = new MandatoryFields();
+		String mandatoryFields ='';                
+        Boolean mandatory = true;  
+        /*		
+		
+		if(request.customerRequestedDate != null ){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' customerRequestedDate';
+        }
+		if(request.serviceBusinessUnit != null && request.serviceBusinessUnit != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' serviceBusinessUnit';
+        }
+		if(request.priority != null && request.priority != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' priority';
+        }
+		if(request.workOrderReason != null && request.workOrderReason != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' workOrderReason';
+        }
+		
+		if(request.workOrderStatus != null && request.workOrderStatus != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' workOrderStatus';
+        }
+		if(request.workOrderCategory != null && request.workOrderCategory != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' workOrderCategory';
+        }
+		
+		if(request.isBillable != null && request.isBillable != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' isBillable';
+        }
+		if(request.billingType != null && request.billingType != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' billingType';
+        }
+		*/
+		if(request.WOBackOfficeReference != null ){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' WOBackOfficeReference';
+        }
+		if(request.countryOfBackOffice != null && request.countryOfBackOffice != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' countryOfBackOffice';
+        }
+		if(request.backOfficeSystem != null && request.backOfficeSystem != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' backOfficeSystem';
+        }
+		if(request.workOrderType != null && request.workOrderType != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' workOrderType';
+        }
+		
+		 mf.isMFPass = mandatory;
+        mf.fields = mandatoryFields;
+		return mf;
+	}
     public static MandatoryFields WorkOrderSyncDetailsMandataryCheck(WorkOrderSyncDetails request){
         MandatoryFields mf = new MandatoryFields();
         
