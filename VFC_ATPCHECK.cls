@@ -9,9 +9,9 @@ public with sharing class VFC_ATPCHECK {
         public Boolean isSuccess;
         Public Boolean isactive{get;set;}
         public Map<id,SVMXC__RMA_Shipment_Line__c> lineMap = new Map<id,SVMXC__RMA_Shipment_Line__c>();
-		public String Referencesparepart = system.label.CLMAY15SRV03;
-		public String NonReferencesparepart = system.label.CLMAY15SRV04;
-		
+    public String Referencesparepart = system.label.CLMAY15SRV03;
+    public String NonReferencesparepart = system.label.CLMAY15SRV04;
+    
         public Class PartsOrderLine{
         
             public Boolean checked {get; set;}
@@ -30,10 +30,10 @@ public with sharing class VFC_ATPCHECK {
 
     public VFC_ATPCHECK(ApexPages.StandardController controller) {
         List<Date> dlist = new List<Date>();
-		
-		Schema.DescribeSObjectResult dSobjres = Schema.SObjectType.SVMXC__RMA_Shipment_Order__c; 
+    
+    Schema.DescribeSObjectResult dSobjres = Schema.SObjectType.SVMXC__RMA_Shipment_Order__c; 
         Map<String,Schema.RecordTypeInfo> PartOrderRecordTypeInfo = dSobjres.getRecordTypeInfosByName(); 
-		String LineType ='';
+    String LineType ='';
             
         
         plist = new List<PartsOrderLine>();
@@ -42,25 +42,27 @@ public with sharing class VFC_ATPCHECK {
         this.wo = (SVMXC__Service_Order__c)controller.getRecord();
         this.latestAvailabilityDate = wo.EarliestAvailabilityDate__c;
         this.isSuccess = false;
-		Id partsorderrtId ;
-		Set<String> rtset = new Set<String>();
-		rtset.add(Referencesparepart);
-		rtset.add(NonReferencesparepart);
-		
-		if(wo.SVMXC__Order_Status__c =='Unscheduled' || wo.SVMXC__Order_Status__c =='Scheduled' || wo.SVMXC__Order_Status__c =='Customer Confirmed' || wo.SVMXC__Order_Status__c =='Acknowledge FSE' ||  wo.SVMXC__Order_Status__c =='WIP' )
-		{		
-			partsorderrtId = PartOrderRecordTypeInfo.get('Shipment').getRecordTypeId();
-			LineType = 'Shipment';
-		}
-		else if(wo.SVMXC__Order_Status__c =='Service Complete'){
-			partsorderrtId = PartOrderRecordTypeInfo.get('RMA').getRecordTypeId();
-			LineType = 'RMA';
-		}
-		
+    Id partsorderrtId ;
+    Set<String> rtset = new Set<String>();
+    
+    rtset.add(Referencesparepart);
+    rtset.add(NonReferencesparepart);
+    /*
+    if(wo.SVMXC__Order_Status__c =='Unscheduled' || wo.SVMXC__Order_Status__c =='Scheduled' || wo.SVMXC__Order_Status__c =='Customer Confirmed' || wo.SVMXC__Order_Status__c =='Acknowledge FSE' ||  wo.SVMXC__Order_Status__c =='WIP' )
+    {    
+      partsorderrtId = PartOrderRecordTypeInfo.get('Shipment').getRecordTypeId();
+      LineType = 'Shipment';
+    }
+    else if(wo.SVMXC__Order_Status__c =='Service Complete'){
+      partsorderrtId = PartOrderRecordTypeInfo.get('RMA').getRecordTypeId();
+      LineType = 'RMA';
+    }*/
+    
         for(SVMXC__RMA_Shipment_Line__c line: [SELECT name,BOMaterialReference__c,SVMXC__Line_Type__c,Spare_part_category__c,SKU__c,SVMXC__Expected_Quantity2__c,SVMXC__RMA_Shipment_Order__c ,SVMXC__RMA_Shipment_Order__r.SVMXC__Order_Status__c,SVMXC__RMA_Shipment_Order__r.id,recordtypeid,
+                                               SVMXC__RMA_Shipment_Order__r.Ship_to__r.Name, //Yassine B 19/05/2015 BR-7676
                                                SVMXC__Expected_Receipt_Date__c,Spare_part_description__c,Product_Reference__c,Storage_Location__c,UnitofMeasure__c,SVMXC__Product__r.SKU__c,
                                                SVMXC__Product__r.Description,SVMXC__Product__r.Name, SVMXC__Product__c,RequestedDate__c,Ship__r.name,plant_name__c,Spare_part_name__r.name,
-                                               plant_name__r.id,plant_name__r.name,Lead_Date__c,SVMXC__Expected_Ship_Date__c,BackOfficeReference__c, Available_stock__c, Plant__c,calculated_plant__c,calculated_plant__r.Name,searchForRefurbished__c, Reason_For_New__c,Free_text_reference__c,Generic_reference__c FROM SVMXC__RMA_Shipment_Line__c WHERE SVMXC__Service_Order__c =: wo.Id and recordtypeid in :rtset and SVMXC__RMA_Shipment_Order__r.SVMXC__Order_Status__c='Open' AND SVMXC__Line_Type__c =: LineType ]){
+                                               plant_name__r.id,plant_name__r.name,Lead_Date__c,SVMXC__Expected_Ship_Date__c,BackOfficeReference__c, Available_stock__c, Plant__c,calculated_plant__c,calculated_plant__r.Name,searchForRefurbished__c, Reason_For_New__c,Free_text_reference__c,Generic_reference__c FROM SVMXC__RMA_Shipment_Line__c WHERE SVMXC__Service_Order__c =: wo.Id and recordtypeid in :rtset and SVMXC__RMA_Shipment_Order__r.SVMXC__Order_Status__c='Open'  ]){
                                                
                                                
                 dlist.add(line.SVMXC__Expected_Ship_Date__c);
@@ -136,7 +138,8 @@ public with sharing class VFC_ATPCHECK {
             //latestAvailabilityDate =dlist[dlist.size()-1];
             System.debug('\n Hari Log:'+plidSet);
             System.debug('\n Hari Log:'+pidSet);
-            List<SVMXC__RMA_Shipment_Order__c> parlist=[select  name,Ship_to__c,Ship_to__r.name,Ship_to__r.Street__c,Ship_to__r.ZipCode__c,Ship_to__r.City__c,Ship_to__r.Country__r.CountryCode__c,Ship_to__r.StateProvince__r.StateProvinceCode__c,Ship_to__r.LocalCity__c,Ship_to__r.AdditionalAddress__c,Ship_to__r.LocalAdditionalAddress__c,Ship_to__r.StreetLocalLang__c,Ship_to__r.AccountLocalName__c, SVMXC__Service_Order__c, SVMXC__Service_Order__r.BackOfficeReference__c from SVMXC__RMA_Shipment_Order__c where id in:pidSet];
+            // Yassine B 19/05/2015 BR-7677 : Added more fields in QUERY
+            List<SVMXC__RMA_Shipment_Order__c> parlist=[select  name,Ship_to__c,Ship_to__r.name, To_Name__c, Ship_to__r.Street__c, SVMXC__Destination_Street__c, Ship_to__r.ZipCode__c, SVMXC__Destination_Zip__c, Ship_to__r.City__c, SVMXC__Destination_City__c, Ship_to__r.Country__r.CountryCode__c, To_Country__r.CountryCode__c, Ship_to__r.StateProvince__r.StateProvinceCode__c, To_State__r.StateProvinceCode__c, Ship_to__r.LocalCity__c,Ship_to__r.AdditionalAddress__c,Ship_to__r.LocalAdditionalAddress__c,Ship_to__r.StreetLocalLang__c,Ship_to__r.AccountLocalName__c, SVMXC__Service_Order__c, SVMXC__Service_Order__r.BackOfficeReference__c from SVMXC__RMA_Shipment_Order__c where id in:pidSet];
             map<id,SVMXC__RMA_Shipment_Order__c> partsordermap= new map<id,SVMXC__RMA_Shipment_Order__c>();
             partsordermap.putall(parlist);
             
@@ -144,23 +147,33 @@ public with sharing class VFC_ATPCHECK {
             for(Id pid: porderplineMap.keyset()){
                 WS_ATPCheck_MW.Account  acc= new WS_ATPCheck_MW.Account();
                 SVMXC__RMA_Shipment_Order__c prec = partsordermap.get(pid);
-                        
-                       acc.name=prec.Ship_to__r.name;
-                       //acc.bFOID = String.valueOf(prec.Ship_to__c);
-                       acc.NameLocal=prec.Ship_to__r.AccountLocalName__c;
-                       acc.Street=prec.Ship_to__r.Street__c;
-                       acc.StreetLocal=prec.Ship_to__r.StreetLocalLang__c;
-                       acc.AddAddressInfo=prec.Ship_to__r.AdditionalAddress__c;
-                       acc.AddAddressInfoLocal=prec.Ship_to__r.LocalAdditionalAddress__c;
-                       acc.ZipCode=prec.Ship_to__r.ZipCode__c;
-                       acc.City=prec.Ship_to__r.City__c;
-                       acc.LocalCity=prec.Ship_to__r.LocalCity__c;
-                       acc.CountryCode=prec.Ship_to__r.Country__r.CountryCode__c;
-                       acc.StateProvinceCode=prec.Ship_to__r.StateProvince__r.StateProvinceCode__c;
-                       System.debug('\n Hari Log : Account '+acc);
-                       
+                       // Yassine B 19/05/2015 BR-7677   -- START
+                      if(prec.Ship_to__c != null){ 
+                           acc.name=prec.Ship_to__r.name;
+                           //acc.bFOID = String.valueOf(prec.Ship_to__c);
+                           acc.NameLocal=prec.Ship_to__r.AccountLocalName__c;
+                           acc.Street=prec.Ship_to__r.Street__c;
+                           acc.StreetLocal=prec.Ship_to__r.StreetLocalLang__c;
+                           acc.AddAddressInfo=prec.Ship_to__r.AdditionalAddress__c;
+                           acc.AddAddressInfoLocal=prec.Ship_to__r.LocalAdditionalAddress__c;
+                           acc.ZipCode=prec.Ship_to__r.ZipCode__c;
+                           acc.City=prec.Ship_to__r.City__c;
+                           acc.LocalCity=prec.Ship_to__r.LocalCity__c;
+                           acc.CountryCode=prec.Ship_to__r.Country__r.CountryCode__c;
+                           acc.StateProvinceCode=prec.Ship_to__r.StateProvince__r.StateProvinceCode__c;
+                           System.debug('\n Hari Log : Account '+acc);
+                       }else{
+                           acc.name=prec.To_Name__c;
+                           acc.Street=prec.SVMXC__Destination_Street__c;
+                           acc.ZipCode=prec.SVMXC__Destination_Zip__c;
+                           acc.City=prec.SVMXC__Destination_Zip__c;
+                           acc.CountryCode=prec.To_Country__r.CountryCode__c;
+                           acc.StateProvinceCode=prec.To_State__r.StateProvinceCode__c;
+                       }
+                       // Yassine B 19/05/2015 BR-7677   -- END
                        WS_ATPCheck_MW.PartsOrder porder = new  WS_ATPCheck_MW.PartsOrder();
                         porder.partOrderbFOID =  String.valueOf(pid);
+                        porder.shipToAccount = acc;
                         porder.WOBackOfficeReference = prec.SVMXC__Service_Order__r.BackOfficeReference__c;
                         System.debug('\n Hari Log : Parts Order '+porder );
                         List<WS_ATPCheck_MW.PartsOrderLine> PartsOrderLines = new List<WS_ATPCheck_MW.PartsOrderLine>();
@@ -209,35 +222,67 @@ public with sharing class VFC_ATPCHECK {
                 Set<String> calculatedPlantSet = new Set<String>();
                 
                 If(response!=null){
+          /*
+          for(WS_ATPCheck_MW.PartsOrderLineResult res:response){
+            
+            for(PartsOrderLine pobj: plist){
+              
+               if(res.partOrderLinebFOID == String.valueOf(pobj.plid)){
+                 if(res.calculatedPlant != null && res.calculatedPlant !='')
+                calculatedPlantSet.add(res.calculatedPlant);
+                // pobj.pline.calculated_plant__c = getPlantIDFromName(res.calculatedPlant);//TODO: query to be changed to have the query outside the for loop
+                 pobj.pline.Available_stock__c = res.stockQuantity;
+                 pobj.pline.Spare_part_category__c = res.sparePartCategory;
+                 if(res.expectedShipDate!=null){
+                  pobj.pline.SVMXC__Expected_Ship_Date__c = Date.valueOf(res.expectedShipDate);
+                 }
+                 if(res.LeadDate!=null && res.LeadDate != 0){
+                  pobj.pline.Lead_Date__c = (pobj.pline.RequestedDate__c).addDays(res.LeadDate);                       
+                 }else{
+                   pobj.pline.Lead_Date__c = null;
+                 }
+                 pobj.pline.BOMaterialReference__c= res.BOMaterialReference;
+                 pobj.Message = res.BOMessage;
                 
-                for(WS_ATPCheck_MW.PartsOrderLineResult res:response){
-                    
-                    for(PartsOrderLine pobj: plist){
-                        
-                       if(res.partOrderLinebFOID == String.valueOf(pobj.plid)){
-                           if(res.calculatedPlant != null && res.calculatedPlant !='')
-                            calculatedPlantSet.add(res.calculatedPlant);
-                          // pobj.pline.calculated_plant__c = getPlantIDFromName(res.calculatedPlant);//TODO: query to be changed to have the query outside the for loop
-                           pobj.pline.Available_stock__c = res.stockQuantity;
-                           pobj.pline.Spare_part_category__c = res.sparePartCategory;
-                           if(res.expectedShipDate!=null){
-                                pobj.pline.SVMXC__Expected_Ship_Date__c = Date.valueOf(res.expectedShipDate);
-                           }
-                           if(res.LeadDate!=null && res.LeadDate != 0){
-                                pobj.pline.Lead_Date__c = (pobj.pline.RequestedDate__c).addDays(res.LeadDate);                       
-                           }else{
-                               pobj.pline.Lead_Date__c = null;
-                           }
-                           pobj.pline.BOMaterialReference__c= res.BOMaterialReference;
-                           pobj.Message = res.BOMessage;
-                          
-                           //Adding dates to the list to be sorted later
-                          dlist.add(pobj.pline.SVMXC__Expected_Ship_Date__c);
-                          dlist.add(pobj.pline.Lead_Date__c);
-                        }
-                        
-                    }
-                }
+                 //Adding dates to the list to be sorted later
+                dlist.add(pobj.pline.SVMXC__Expected_Ship_Date__c);
+                dlist.add(pobj.pline.Lead_Date__c);
+              }
+              
+            }
+          }*/
+          for(PartsOrderLine pobj: plist){
+            for(WS_ATPCheck_MW.PartsOrderLineResult res:response){
+              if(res.partOrderLinebFOID == String.valueOf(pobj.plid)){
+                System.debug('@@@@@@@@@@@@@@@@@@@@@@@@@@');
+                
+                 if(res.calculatedPlant != null && res.calculatedPlant !='')
+                calculatedPlantSet.add(res.calculatedPlant);
+                // pobj.pline.calculated_plant__c = getPlantIDFromName(res.calculatedPlant);//TODO: query to be changed to have the query outside the for loop
+                 pobj.pline.Available_stock__c = res.stockQuantity;
+                 pobj.pline.Spare_part_category__c = res.sparePartCategory;
+                 if(res.expectedShipDate!=null){
+                  pobj.pline.SVMXC__Expected_Ship_Date__c = Date.valueOf(res.expectedShipDate);
+                 }
+                 if(res.LeadDate!=null && res.LeadDate != 0){
+                  pobj.pline.Lead_Date__c = (pobj.pline.RequestedDate__c).addDays(res.LeadDate);                       
+                 }else{
+                   pobj.pline.Lead_Date__c = null;
+                 }
+                 pobj.pline.BOMaterialReference__c= res.BOMaterialReference;
+                 pobj.Message = res.BOMessage;
+                
+                 //Adding dates to the list to be sorted later
+                System.debug('||||||||||||||||||||||||');
+              }
+            
+            }  
+            dlist.add(pobj.pline.SVMXC__Expected_Ship_Date__c);
+            dlist.add(pobj.pline.Lead_Date__c);            
+          
+          }
+        
+        
               }
                 
                 if(calculatedPlantSet != null && calculatedPlantSet.size()>0)

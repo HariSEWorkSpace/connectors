@@ -41,7 +41,7 @@ global class WS_Work_Order{
             webservice String  PONumber;
             webservice String  serviceCenterTerritoryName;
             webservice String  customerReferenceNumber;
-            webservice DateTime  TECH_FOLastUpdateTimestamp; 
+            webservice String  TECH_FOLastUpdateTimestamp; 
             webservice WorkDetail   WorkDetail;
             webservice PartsOrders PartsOrders;
             webservice String   quotationNumber;
@@ -147,6 +147,7 @@ global class WS_Work_Order{
         webservice String installedAtLocalCity;     
         webservice String installedAtStateProvinceCode;
         webservice String installedAtRecordTypeName;
+		webservice String uniqueDigitalID;
         
         
        
@@ -177,10 +178,10 @@ global class WS_Work_Order{
         webservice  String  TECH_BOPartsOrderRecordId;
         webservice  String  TECH_BOLastUpdateTimestamp;// Data type need to ask
         webservice  String  synchronizationLog;
-		webservice  String  attentionToSESAID;
-		webservice  String  attentionToEmail;
-		webservice  String  partOrderType;
-		
+        webservice  String  attentionToSESAID;
+        webservice  String  attentionToEmail;
+        webservice  String  partOrderType;
+        
 
         webservice List<PartsOrderLines> PartsOrderLines;
      
@@ -232,13 +233,13 @@ global class WS_Work_Order{
         webservice  String TECH_BOLastUpdateTimestamp; // DataType need to ask      
         webservice  String shipmentMode;
         webservice  String TECH_BOPartsOrderLineRecordId;
-		webservice  String partOrderLineInternalType;
-		webservice  Decimal receivedQuantity;
-		webservice  Date receivedDate;
-		webservice  String returnReason;
-		webservice  String installedProductSerialNumber;
-		webservice  String currencyIsoCode;
-		webservice  Double linePrice;
+        webservice  String partOrderLineInternalType;
+        webservice  Decimal receivedQuantity;
+        webservice  Date receivedDate;
+        webservice  String returnReason;
+        webservice  String installedProductSerialNumber;
+        webservice  String currencyIsoCode;
+        webservice  Double linePrice;
         
 
 
@@ -344,12 +345,12 @@ global class WS_Work_Order{
         webservice  Decimal failedQuantity;
         webservice String workDescription;
         webservice String levelRequired;
-		webservice String partOrderLineType;
-		webservice String genericReference;
-		webservice String freeTextReference;
-		webservice Decimal leftOnsiteQuantity;
-		webservice String notReturnReason;
-		
+        webservice String partOrderLineType;
+        webservice String genericReference;
+        webservice String freeTextReference;
+        webservice Decimal leftOnsiteQuantity;
+        webservice String notReturnReason;
+        
 
         
 
@@ -541,29 +542,29 @@ global class WS_Work_Order{
             Set<Id> accidSet = new Set<id>();
             List<SVMXC__Service_Order__c> existingwolist = new List<SVMXC__Service_Order__c>();
             List<WorkOrder> WorkOrderListToProcess = new List<WorkOrder>();
-			List<WorkOrder> WorkOrderMandatoryPass = new List<WorkOrder>();
+            List<WorkOrder> WorkOrderMandatoryPass = new List<WorkOrder>();
             Map<String,SVMXC__Service_Order__c> existingMap = new Map<String,SVMXC__Service_Order__c>();
             
             RecordType rt =[SELECT Description,DeveloperName,Id,Name,SobjectType FROM RecordType where SobjectType='SVMXC__Service_Order__c' and DeveloperName ='WO_ConnectedWorkOrder'];
             if(WorkOrderList != null){
-				
-				for(WorkOrder wu: WorkOrderList){	
-					MandatoryFields mf = new MandatoryFields();
-					 mf = CreateMandataryCheck(wu);
-					if( mf.isMFPass)
-					{					
-						WorkOrderMandatoryPass.add(wu);
-					}
-					else{					
-					  WorkOrderResult wor = new WorkOrderResult();
+                
+                for(WorkOrder wu: WorkOrderList){   
+                    MandatoryFields mf = new MandatoryFields();
+                     mf = CreateMandataryCheck(wu);
+                    if( mf.isMFPass)
+                    {                   
+                        WorkOrderMandatoryPass.add(wu);
+                    }
+                    else{                   
+                      WorkOrderResult wor = new WorkOrderResult();
                       wor.success = false;
                       wor.type = 'CREATED';                     
                       wor.errorMessage =' Mandatory Fields are missing '+ mf.fields;
-                      worList.add(wor);					
-					}				
-				}
-			
-			
+                      worList.add(wor);                 
+                    }               
+                }
+            
+            
                 Set<String> setsystem = new Set<String>();
                 Set<String> setbref = new Set<String>();
                 for(WorkOrder wou: WorkOrderMandatoryPass){
@@ -665,7 +666,7 @@ global class WS_Work_Order{
                     
                 }
                 if(ipgolden != null && ipgolden.size()>0){
-                    for(SVMXC__Installed_Product__c  ip: [  SELECT GoldenAssetId__c,Name,Id FROM SVMXC__Installed_Product__c  where GoldenAssetId__c  in : ipgolden])
+                    for(SVMXC__Installed_Product__c  ip: [  SELECT GoldenAssetId__c,Name,Id,UniqueSEIdentification__c FROM SVMXC__Installed_Product__c  where GoldenAssetId__c  in : ipgolden])
                     {
                         goldenIdMap.put(ip.GoldenAssetId__c ,ip.id);
                     }
@@ -759,7 +760,7 @@ global class WS_Work_Order{
             }
             if(ipset != null && ipset.size()>0){
                 Map<id,SVMXC__Installed_Product__c> ipidobjmap = new Map<id,SVMXC__Installed_Product__c>();
-                List<SVMXC__Installed_Product__c> iplist =[SELECT Id, SVMXC__Company__c, SVMXC__Site__c FROM SVMXC__Installed_Product__c WHERE id in :ipset ];
+                List<SVMXC__Installed_Product__c> iplist =[SELECT Id, SVMXC__Company__c, SVMXC__Site__c,UniqueSEIdentification__c FROM SVMXC__Installed_Product__c WHERE id in :ipset ];
                 ipidobjmap.putAll(iplist);
                 
                 for(SVMXC__Service_Order__c wo: worderList)
@@ -1282,33 +1283,33 @@ global class WS_Work_Order{
         Map<id,SVMXC__RMA_Shipment_Order__c> porderMap = new Map<id, SVMXC__RMA_Shipment_Order__c>();
         List<SVMXC__RMA_Shipment_Line__c> partsOrderLineList = new List<SVMXC__RMA_Shipment_Line__c>();
         Map<id,List<SVMXC__RMA_Shipment_Line__c>> porderLineMap = new Map<id,List<SVMXC__RMA_Shipment_Line__c>>();
-		Schema.DescribeSObjectResult dSobjres = Schema.SObjectType.SVMXC__RMA_Shipment_Order__c; 
+        Schema.DescribeSObjectResult dSobjres = Schema.SObjectType.SVMXC__RMA_Shipment_Order__c; 
         Map<String,Schema.RecordTypeInfo> PartOrderRecordTypeInfo = dSobjres.getRecordTypeInfosByName(); 
-		Id partsorderrtId ;
-		String LineType ='';
-		if(wo.SVMXC__Order_Status__c =='Unscheduled' || wo.SVMXC__Order_Status__c =='Scheduled' || wo.SVMXC__Order_Status__c =='Customer Confirmed' || wo.SVMXC__Order_Status__c =='Acknowledge FSE' ||  wo.SVMXC__Order_Status__c =='WIP' )
-		{		
-			partsorderrtId = PartOrderRecordTypeInfo.get('Shipment').getRecordTypeId();
-			LineType = 'Shipment';
-		}
-		else if(wo.SVMXC__Order_Status__c =='Service Complete'){
-			partsorderrtId = PartOrderRecordTypeInfo.get('RMA').getRecordTypeId();
-			LineType = 'RMA';
-		}
+        Id partsorderrtId ;
+        String LineType ='';
+        if(wo.SVMXC__Order_Status__c =='Unscheduled' || wo.SVMXC__Order_Status__c =='Scheduled' || wo.SVMXC__Order_Status__c =='Customer Confirmed' || wo.SVMXC__Order_Status__c =='Acknowledge FSE' ||  wo.SVMXC__Order_Status__c =='WIP' )
+        {       
+            partsorderrtId = PartOrderRecordTypeInfo.get('Shipment').getRecordTypeId();
+            LineType = 'Shipment';
+        }
+        else if(wo.SVMXC__Order_Status__c =='Service Complete'){
+            partsorderrtId = PartOrderRecordTypeInfo.get('RMA').getRecordTypeId();
+            LineType = 'RMA';
+        }
        
-		// Yassine B 19/05/2015 BR-7677 : Added more fields in QUERY
+        // Yassine B 19/05/2015 BR-7677 : Added more fields in QUERY
         List<SVMXC__RMA_Shipment_Order__c> partsOrderList = [select id, Name,SVMXC__Order_Status__c,Service_level__c,SVMXC__Shipping_Receiving_Notes__c,Freight_terms__c,Parts_SLA_terms__c,On_site_SLA_terms__c,SVMXC__Contact__c,SVMXC__Contact__r.SEContactID__c,SVMXC__Contact__r.FirstName,SVMXC__Contact__r.LocalFirstName__c,SVMXC__Contact__r.MidInit__c,
         SVMXC__Contact__r.LocalMidInit__c,SVMXC__Contact__r.LastName,SVMXC__Contact__r.LocalLastName__c,SVMXC__Contact__r.Email,SVMXC__Contact__r.MobilePhone,SVMXC__Contact__r.WorkPhone__c,
         Ship_to__r.SEAccountID__c,Ship_to__r.Name,Ship_to__r.AccountLocalName__c,Ship_to__r.Street__c,Ship_to__r.StreetLocalLang__c,Ship_to__r.AdditionalAddress__c,Ship_to__r.LocalAdditionalAddress__c,Ship_to__r.ZipCode__c,Ship_to__r.City__c,Ship_to__r.LocalCity__c,Ship_to__r.Country__r.CountryCode__c,Ship_to__r.StateProvince__c,Ship_to__c,Attention_To__r.FederationIdentifier,Attention_To__r.Email,
         Ship_to__r.RecordType.Name,Ship_to__r.StateProvince__r.StateProvinceCode__c,RecordType.Name, To_Name__c, SVMXC__Destination_Street__c, SVMXC__Destination_Zip__c, SVMXC__Destination_City__c,To_Country__r.CountryCode__c,To_State__r.StateProvinceCode__c  from SVMXC__RMA_Shipment_Order__c where SVMXC__Service_Order__c = : wo.id AND SVMXC__Order_Status__c='Open' and RecordTypeId =:partsorderrtId ];
-		
+        
         System.debug('\n WWS Log: '+partsOrderList.size());
-		
+        
         if(partsOrderList != null && partsOrderList.size()>0){
             porderMap.putAll(partsOrderList);       
             partsOrderLineList = [select  id,Name,SVMXC__RMA_Shipment_Order__c,SVMXC__Line_Type__c,Plant_Name__r.name,SVMXC__Expected_Quantity2__c,UnitofMeasure__c,RequestedDate__c,RecordType.Name,
             Calculated_plant__r.name,Spare_part_category__c,SVMXC__Expected_Ship_Date__c,Lead_Date__c,Free_text_reference__c,Generic_reference__c,Shipment_mode__c,SVMXC__Product__c,SKU__c,
-            BOMaterialReference__c,createdby.FederationIdentifier,createdby.FirstName,createdby.LastName,Available_stock__c,Received_Qty__c,Received_Date__c,Return_Reason__c,SVMXC__Serial_Number__r.SVMXC__Serial_Lot_Number__c,CurrencyIsoCode,SVMXC__Line_Price2__c from SVMXC__RMA_Shipment_Line__c where SVMXC__RMA_Shipment_Order__c in : porderMap.keyset() AND SVMXC__Line_Type__c =: LineType];			
+            BOMaterialReference__c,createdby.FederationIdentifier,createdby.FirstName,createdby.LastName,Available_stock__c,Received_Qty__c,Received_Date__c,Return_Reason__c,SVMXC__Serial_Number__r.SVMXC__Serial_Lot_Number__c,CurrencyIsoCode,SVMXC__Line_Price2__c from SVMXC__RMA_Shipment_Line__c where SVMXC__RMA_Shipment_Order__c in : porderMap.keyset() AND SVMXC__Line_Type__c =: LineType];           
             System.debug('\n WWS Log: '+partsOrderLineList.size());
             for(SVMXC__RMA_Shipment_Line__c line: partsOrderLineList){
                 if(porderLineMap.containskey(line.SVMXC__RMA_Shipment_Order__c)){
@@ -1325,7 +1326,7 @@ global class WS_Work_Order{
                 PartsOrder pou = new PartsOrder();
                 
                 pou.partOrderbFOID = porder.id;
-				pou.partOrderType = porder.RecordType.Name;
+                pou.partOrderType = porder.RecordType.Name;
                 pou.partOrderbFONumber = porder.name;
                 pou.partOrderStatus = porder.SVMXC__Order_Status__c;
                 pou.serviceLevel =  porder.Service_level__c;
@@ -1333,8 +1334,8 @@ global class WS_Work_Order{
                 pou.freightTerms = porder.Freight_terms__c;             
                 pou.partsSLATerms = porder.Parts_SLA_terms__c;
                 pou.onsiteSLATerms =  porder.On_site_SLA_terms__c;
-				pou.attentionToSESAID = porder.Attention_To__r.FederationIdentifier;
-				pou.attentionToEmail = porder.Attention_To__r.Email;
+                pou.attentionToSESAID = porder.Attention_To__r.FederationIdentifier;
+                pou.attentionToEmail = porder.Attention_To__r.Email;
                 Contact c = new Contact();
                 c.GoldenID = porder.SVMXC__Contact__r.SEContactID__c;
                 c.firstName = porder.SVMXC__Contact__r.FirstName;
@@ -1398,10 +1399,10 @@ global class WS_Work_Order{
                         polu.sparePartCategory = String.valueOf(pol.Spare_part_category__c);
                         polu.expectedShipDate = String.valueOf(pol.SVMXC__Expected_Ship_Date__c);
                         polu.LeadDate = String.valueOf(pol.Lead_Date__c);
-						polu.receivedQuantity = pol.Received_Qty__c;
-						polu.receivedDate = pol.Received_Date__c;
-						polu.returnReason = pol.Return_Reason__c;
-						polu.installedProductSerialNumber = pol.SVMXC__Serial_Number__r.SVMXC__Serial_Lot_Number__c;
+                        polu.receivedQuantity = pol.Received_Qty__c;
+                        polu.receivedDate = pol.Received_Date__c;
+                        polu.returnReason = pol.Return_Reason__c;
+                        polu.installedProductSerialNumber = pol.SVMXC__Serial_Number__r.SVMXC__Serial_Lot_Number__c;
 
                         polu.BOMaterialReference = pol.BOMaterialReference__c;
                         
@@ -1412,8 +1413,8 @@ global class WS_Work_Order{
                         polu.createdByLastName = pol.createdby.LastName;
                         polu.shipmentMode = pol.Shipment_mode__c;
                         polu.partOrderLineType = pol.RecordType.Name;
-						polu.currencyIsoCode = pol.CurrencyIsoCode;
-						polu.linePrice = pol.SVMXC__Line_Price2__c;
+                        polu.currencyIsoCode = pol.CurrencyIsoCode;
+                        polu.linePrice = pol.SVMXC__Line_Price2__c;
                         pols.add(polu);
 
                     }
@@ -1923,100 +1924,102 @@ global class WS_Work_Order{
         return result;
         
     }
-	
-	
+    
+    
     public class MandatoryFields{
         public Boolean isMFPass{get;set;}
         public String fields{get;set;}
         
     }
-	
-	public static MandatoryFields CreateMandataryCheck(WorkOrder request){
-		MandatoryFields mf = new MandatoryFields();
-		String mandatoryFields ='';                
+    
+    public static MandatoryFields CreateMandataryCheck(WorkOrder request){
+        MandatoryFields mf = new MandatoryFields();
+        String mandatoryFields ='';                
         Boolean mandatory = true;  
-        /*		
-		
-		if(request.customerRequestedDate != null ){
+        /*      
+        
+        if(request.customerRequestedDate != null ){
         }
         else{
             mandatory = false;
             mandatoryFields += mandatoryFields + ' customerRequestedDate';
         }
-		if(request.serviceBusinessUnit != null && request.serviceBusinessUnit != ''){
+        if(request.serviceBusinessUnit != null && request.serviceBusinessUnit != ''){
         }
         else{
             mandatory = false;
             mandatoryFields += mandatoryFields + ' serviceBusinessUnit';
         }
-		if(request.priority != null && request.priority != ''){
+        if(request.priority != null && request.priority != ''){
         }
         else{
             mandatory = false;
             mandatoryFields += mandatoryFields + ' priority';
         }
-		if(request.workOrderReason != null && request.workOrderReason != ''){
+        if(request.workOrderReason != null && request.workOrderReason != ''){
         }
         else{
             mandatory = false;
             mandatoryFields += mandatoryFields + ' workOrderReason';
         }
-		
-		if(request.workOrderStatus != null && request.workOrderStatus != ''){
+        
+        if(request.workOrderStatus != null && request.workOrderStatus != ''){
         }
         else{
             mandatory = false;
             mandatoryFields += mandatoryFields + ' workOrderStatus';
         }
-		if(request.workOrderCategory != null && request.workOrderCategory != ''){
+        if(request.workOrderCategory != null && request.workOrderCategory != ''){
         }
         else{
             mandatory = false;
             mandatoryFields += mandatoryFields + ' workOrderCategory';
         }
-		
-		if(request.isBillable != null && request.isBillable != ''){
+        
+        if(request.isBillable != null && request.isBillable != ''){
         }
         else{
             mandatory = false;
             mandatoryFields += mandatoryFields + ' isBillable';
         }
-		if(request.billingType != null && request.billingType != ''){
+        if(request.billingType != null && request.billingType != ''){
         }
         else{
             mandatory = false;
             mandatoryFields += mandatoryFields + ' billingType';
         }
-		*/
-		if(request.WOBackOfficeReference != null ){
-        }
-        else{
-            mandatory = false;
-            mandatoryFields += mandatoryFields + ' WOBackOfficeReference';
-        }
-		if(request.countryOfBackOffice != null && request.countryOfBackOffice != ''){
-        }
-        else{
-            mandatory = false;
-            mandatoryFields += mandatoryFields + ' countryOfBackOffice';
-        }
-		if(request.backOfficeSystem != null && request.backOfficeSystem != ''){
-        }
-        else{
-            mandatory = false;
-            mandatoryFields += mandatoryFields + ' backOfficeSystem';
-        }
-		if(request.workOrderType != null && request.workOrderType != ''){
+        if(request.workOrderType != null && request.workOrderType != ''){
         }
         else{
             mandatory = false;
             mandatoryFields += mandatoryFields + ' workOrderType';
         }
-		
-		 mf.isMFPass = mandatory;
+        
+        */
+        if(request.WOBackOfficeReference != null ){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' WOBackOfficeReference';
+        }
+        if(request.countryOfBackOffice != null && request.countryOfBackOffice != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' countryOfBackOffice';
+        }
+        if(request.backOfficeSystem != null && request.backOfficeSystem != ''){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' backOfficeSystem';
+        }
+        
+        
+         mf.isMFPass = mandatory;
         mf.fields = mandatoryFields;
-		return mf;
-	}
+        return mf;
+    }
     public static MandatoryFields WorkOrderSyncDetailsMandataryCheck(WorkOrderSyncDetails request){
         MandatoryFields mf = new MandatoryFields();
         
@@ -2037,7 +2040,7 @@ global class WS_Work_Order{
                 mandatory = false;
                 mandatoryFields += mandatoryFields + 'workOrderBOReference';
             }
-			/*
+            /*
             if(request.workOrderGroupBOReference != null && request.workOrderGroupBOReference !=''){
             }
             else{
@@ -2090,10 +2093,10 @@ global class WS_Work_Order{
                SVMXC__Component__r.SVMXC__Company__r.Country__r.CountryCode__c,SVMXC__Component__r.SVMXC__Company__r.Name,SVMXC__Component__r.SVMXC__Company__r.AccountLocalName__c,
                SVMXC__Component__r.SVMXC__Company__r.Street__c,SVMXC__Component__r.SVMXC__Company__r.StreetLocalLang__c,SVMXC__Component__r.SVMXC__Company__r.AdditionalAddress__c,
                SVMXC__Component__r.SVMXC__Company__r.LocalAdditionalAddress__c,SVMXC__Component__r.SVMXC__Company__r.ZipCode__c,SVMXC__Component__r.SVMXC__Company__r.City__c,
-               SVMXC__Component__r.SVMXC__Company__r.LocalCity__c, SVMXC__Component__r.SVMXC__Company__r.RecordType.Name,
+               SVMXC__Component__r.SVMXC__Company__r.LocalCity__c, SVMXC__Component__r.SVMXC__Company__r.RecordType.Name,SVMXC__Component__r.UniqueSEIdentification__c,
                SVMXC__Component__r.SVMXC__Company__r.StateProvince__r.StateProvinceCode__c,SVMXC__Service_Contract__r.BackOfficeReference__c,ServiceLine__r.BackOfficeReference__c,
                Sales_Order_Number__c,salesOrderLineNumber__c,Customer_Reference_Number__c,PONumber__c,SVMXC__Primary_Territory__r.Name,CustomerReferenceNumber__c,SVMXC__Case__c,SVMXC__Case__r.CaseNumber,SVMXC__Component__r.RecordType.Name,
-               EstimatedExpenseCost__c, Estimated_Labor_Cost__c, EstimatedMaterialCost__c, QuotationNumber__c,CurrencyIsoCode,SVMXC__Problem_Description__c, SVMXC__Primary_Territory__r.Plant__r.Name,TECH_WOBackOfficeRecordID__c,TECH_FOLastUpdate_Timestamp__c,PlannedServiceDuration__c from SVMXC__Service_Order__c where id in : woids];
+               EstimatedExpenseCost__c, Estimated_Labor_Cost__c, EstimatedMaterialCost__c, QuotationNumber__c,CurrencyIsoCode,SVMXC__Problem_Description__c, SVMXC__Primary_Territory__r.Plant__r.Name,TECH_WOBackOfficeRecordID__c,TECH_FOLastUpdate_Timestamp__c,LastModifiedDate ,PlannedServiceDuration__c from SVMXC__Service_Order__c where id in : woids];
                
         return wos;
     }
@@ -2190,7 +2193,7 @@ global class WS_Work_Order{
                SVMXC__Component__r.SVMXC__Company__r.LocalCity__c, SVMXC__Component__r.SVMXC__Company__r.RecordType.Name,
                SVMXC__Component__r.SVMXC__Company__r.StateProvince__r.StateProvinceCode__c,SVMXC__Service_Contract__r.BackOfficeReference__c,ServiceLine__r.BackOfficeReference__c,
                Sales_Order_Number__c,salesOrderLineNumber__c,Customer_Reference_Number__c,PONumber__c,SVMXC__Primary_Territory__r.Name,CustomerReferenceNumber__c,SVMXC__Case__c,SVMXC__Case__r.CaseNumber,SVMXC__Component__r.RecordType.Name,PlannedServiceDuration__c,
-               EstimatedExpenseCost__c, Estimated_Labor_Cost__c, EstimatedMaterialCost__c, QuotationNumber__c,CurrencyIsoCode,SVMXC__Problem_Description__c, SVMXC__Primary_Territory__r.Plant__r.Name,TECH_WOBackOfficeRecordID__c,TECH_FOLastUpdate_Timestamp__c from SVMXC__Service_Order__c where BackOfficeSystem__c =:backOfficeSystem and  TECH_TechnicaClosure__c='To Be Processed' and SVMXC__Order_Status__c ='Service Validated' limit 150];
+               EstimatedExpenseCost__c, Estimated_Labor_Cost__c, EstimatedMaterialCost__c, QuotationNumber__c,CurrencyIsoCode,SVMXC__Problem_Description__c, SVMXC__Primary_Territory__r.Plant__r.Name,TECH_WOBackOfficeRecordID__c,TECH_FOLastUpdate_Timestamp__c,LastModifiedDate  from SVMXC__Service_Order__c where BackOfficeSystem__c =:backOfficeSystem and  TECH_TechnicaClosure__c='To Be Processed' and SVMXC__Order_Status__c ='Service Validated' limit 150];
             
             List<SVMXC__RMA_Shipment_Line__c> partsOrderLineList = new List<SVMXC__RMA_Shipment_Line__c>();
             
@@ -2534,11 +2537,11 @@ global class WS_Work_Order{
                         p.workDescription = wd.SVMXC__Work_Description__c;
                         p.expectedQuantity = wd.PartsOrderLine__r.SVMXC__Expected_Quantity2__c;
                         p.levelRequired = wd.Level_Required__c;// May Release 2015
-						p.partOrderLineType = wd.Part_Order_Line_Type__c;
-						p.genericReference = wd.PartsOrderLine__r.Generic_reference__c;
-						p.freeTextReference =  wd.PartsOrderLine__r.Free_text_reference__c;
-						p.leftOnsiteQuantity = wd.Left_Onsite_Qty__c;
-						p.notReturnReason =	wd.Not_Returned_Reason__c;
+                        p.partOrderLineType = wd.Part_Order_Line_Type__c;
+                        p.genericReference = wd.PartsOrderLine__r.Generic_reference__c;
+                        p.freeTextReference =  wd.PartsOrderLine__r.Free_text_reference__c;
+                        p.leftOnsiteQuantity = wd.Left_Onsite_Qty__c;
+                        p.notReturnReason = wd.Not_Returned_Reason__c;
                         PartsWDs.add(p);
                     
                     }
@@ -2594,168 +2597,168 @@ global class WS_Work_Order{
         List<ExpenseWD> ExpenseWDs  = new List<ExpenseWD>();  
         List<PartsWD> PartsWDs  = new List<PartsWD>();  
         List<ServiceProductsWD> ServiceProductsWDs = new List<ServiceProductsWD>();
-		Map<id,SVMXC__Service_Order_Line__c> currencyMap = new Map<id,SVMXC__Service_Order_Line__c>();
+        Map<id,SVMXC__Service_Order_Line__c> currencyMap = new Map<id,SVMXC__Service_Order_Line__c>();
             
         
         if(event == 'WO.RELEASE'){
-		
-				List<SVMXC__Service_Order_Line__c> solines = new List<SVMXC__Service_Order_Line__c>();
-				solines = [select id, Name, RecordTypeId ,RecordType.Name,SVMXC__Service_Order__c,SVMXC__Line_Type__c ,SVMXC__Activity_Type__c,HourType__c,SVMXC__Serial_Number__c,SVMXC__Group_Member__c,SVMXC__Expense_Type__c,SVMXC__Date_Received__c,IsBillable__c,SVMXC__Work_Description__c ,SVMXC__Start_Date_and_Time__c ,SVMXC__End_Date_and_Time__c ,TotalTime__c, SVMXC__Work_Detail__c, ExpenseQuantity__c, LinePricePerUnit__c, CurrencyIsoCode,PartsOrderLine__c,PartsOrderLine__r.TECH_BOPartsOrderLineRecordId__c,PartsOrderLine__r.SKU__c ,PartsOrderLine__r.BOMaterialReference__c,PartsOrderLine__r.SVMXC__Product__r.Name,PartsOrderLine__r.SVMXC__Expected_Quantity2__c,ShippedQuantity_del__c,InstalledQuantity__c,FailedQuantity__c,ReturnedQuantity__c, Level_Required__c,
-				Part_Order_Line_Type__c,PartsOrderLine__r.Generic_reference__c,PartsOrderLine__r.Free_text_reference__c,Left_Onsite_Qty__c,Not_Returned_Reason__c
-				from SVMXC__Service_Order_Line__c where SVMXC__Service_Order__c =:woid and ( RecordTypeId =:Planned OR RecordTypeId =:serviceproduct OR RecordTypeId =:Parts)];				
-				
-				List<SVMXC__Service_Order_Line__c> servicelinelist = [select id, convertCurrency(LinePricePerUnit__c) from SVMXC__Service_Order_Line__c where SVMXC__Service_Order__c =:woid and ( RecordTypeId =:Planned and SVMXC__Line_Type__c = 'Expenses' )];
-				 if(servicelinelist != null && servicelinelist.size()>0)
-				 currencyMap.putAll(servicelinelist);
-				
-				if(solines != null && solines.size()>0)
-				{
-					// for preparation IP Map  and Technicians Map
-					for(SVMXC__Service_Order_Line__c  wd:solines)
-					{
-						if(wd.SVMXC__Serial_Number__c != null ){            
-							ipidSet.add(wd.SVMXC__Serial_Number__c);
-						}
-						if(wd.SVMXC__Group_Member__c != null ){         
-							fsridSet.add(wd.SVMXC__Group_Member__c);
-						}
-					}
-					if(ipidSet != null && ipidSet.size()>0)
-					prepareIPMap(ipidSet);
-					if(fsridSet != null && fsridSet.size()>0)
-					prepareTechnicians(fsridSet);
-					// Work Detail Creation
-					for(SVMXC__Service_Order_Line__c  wd:solines){
-						if(wd.RecordTypeId == Planned){  
-						
-							if(wd.SVMXC__Line_Type__c == 'Time')
-							{
-								TimeWD t = new TimeWD();
-								t.workOrderbFOID = wd.SVMXC__Service_Order__c;
-								t.workDetailbFOID = wd.id;
-								//t.lineType = wd.SVMXC__Line_Type__c;
-								t.lineType = System.Label.CLAPR15SRV84;
-								t.activityType = wd.SVMXC__Activity_Type__c;
-								t.hourType = wd.HourType__c;
-								if(wd.SVMXC__Group_Member__c != null)
-								{
-									if(TechnicianMap.containskey(wd.SVMXC__Group_Member__c))
-									{
-										t.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);
-									}
-								}
-								t.isBillable = wd.IsBillable__c;
-								
-								//t.startDateTime = String.valueOf(wd.SVMXC__Start_Date_and_Time__c);
-								t.startDateTime = (wd.SVMXC__Start_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
-								//t.endDateTime = String.valueOf(wd.SVMXC__End_Date_and_Time__c);
-								t.endDateTime =  (wd.SVMXC__End_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
-								t.totalTime = wd.TotalTime__c;
-								t.workDescription = wd.SVMXC__Work_Description__c;
-								t.workDetailPlannedbFOID = wd.SVMXC__Work_Detail__c;
-								t.workDetailbFONumber = wd.Name;
-								t.levelRequired = wd.Level_Required__c; //May Release Yassine 05052015
-								TimeWDs.add(t);
-							}
-							else if(wd.SVMXC__Line_Type__c == 'Expenses'){
-							
-								ExpenseWD e = new ExpenseWD();
-								e.workOrderbFOID = wd.SVMXC__Service_Order__c;
-								e.workDetailbFOID = wd.id;
-								e.lineType = System.Label.CLAPR15SRV84;
-								e.expenseType = wd.SVMXC__Expense_Type__c;
-								e.expenseDate = String.valueOf(wd.SVMXC__Date_Received__c);
-								 if(wd.SVMXC__Group_Member__c != null)
-								{
-									if(TechnicianMap.containskey(wd.SVMXC__Group_Member__c))
-									{
-										e.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);
-									}
-								}
-								e.isBillable = wd.IsBillable__c;
-								//e.billingType = wd.
-								e.expenseQuantity = wd.ExpenseQuantity__c;
-								e.linePricePerUnit = wd.LinePricePerUnit__c;
-								e.currencyIsoCode = wd.CurrencyIsoCode;
-								e.workDescription = wd.SVMXC__Work_Description__c;
-								e.workDetailPlannedbFOID = wd.SVMXC__Work_Detail__c;
-								if(currencyMap.containskey(wd.id))
-								e.linePricePerUnitCorporateCurrency = currencyMap.get(wd.id).LinePricePerUnit__c;
-								e.workDetailbFONumber = wd.Name;
-								e.levelRequired = wd.Level_Required__c; //May Release Yassine 05052015
-								ExpenseWDs.add(e);
-							}
+        
+                List<SVMXC__Service_Order_Line__c> solines = new List<SVMXC__Service_Order_Line__c>();
+                solines = [select id, Name, RecordTypeId ,RecordType.Name,SVMXC__Service_Order__c,SVMXC__Line_Type__c ,SVMXC__Activity_Type__c,HourType__c,SVMXC__Serial_Number__c,SVMXC__Group_Member__c,SVMXC__Expense_Type__c,SVMXC__Date_Received__c,IsBillable__c,SVMXC__Work_Description__c ,SVMXC__Start_Date_and_Time__c ,SVMXC__End_Date_and_Time__c ,TotalTime__c, SVMXC__Work_Detail__c, ExpenseQuantity__c, LinePricePerUnit__c, CurrencyIsoCode,PartsOrderLine__c,PartsOrderLine__r.TECH_BOPartsOrderLineRecordId__c,PartsOrderLine__r.SKU__c ,PartsOrderLine__r.BOMaterialReference__c,PartsOrderLine__r.SVMXC__Product__r.Name,PartsOrderLine__r.SVMXC__Expected_Quantity2__c,ShippedQuantity_del__c,InstalledQuantity__c,FailedQuantity__c,ReturnedQuantity__c, Level_Required__c,
+                Part_Order_Line_Type__c,PartsOrderLine__r.Generic_reference__c,PartsOrderLine__r.Free_text_reference__c,Left_Onsite_Qty__c,Not_Returned_Reason__c
+                from SVMXC__Service_Order_Line__c where SVMXC__Service_Order__c =:woid and ( RecordTypeId =:Planned OR RecordTypeId =:serviceproduct OR RecordTypeId =:Parts)];             
+                
+                List<SVMXC__Service_Order_Line__c> servicelinelist = [select id, convertCurrency(LinePricePerUnit__c) from SVMXC__Service_Order_Line__c where SVMXC__Service_Order__c =:woid and ( RecordTypeId =:Planned and SVMXC__Line_Type__c = 'Expenses' )];
+                 if(servicelinelist != null && servicelinelist.size()>0)
+                 currencyMap.putAll(servicelinelist);
+                
+                if(solines != null && solines.size()>0)
+                {
+                    // for preparation IP Map  and Technicians Map
+                    for(SVMXC__Service_Order_Line__c  wd:solines)
+                    {
+                        if(wd.SVMXC__Serial_Number__c != null ){            
+                            ipidSet.add(wd.SVMXC__Serial_Number__c);
+                        }
+                        if(wd.SVMXC__Group_Member__c != null ){         
+                            fsridSet.add(wd.SVMXC__Group_Member__c);
+                        }
+                    }
+                    if(ipidSet != null && ipidSet.size()>0)
+                    prepareIPMap(ipidSet);
+                    if(fsridSet != null && fsridSet.size()>0)
+                    prepareTechnicians(fsridSet);
+                    // Work Detail Creation
+                    for(SVMXC__Service_Order_Line__c  wd:solines){
+                        if(wd.RecordTypeId == Planned){  
+                        
+                            if(wd.SVMXC__Line_Type__c == 'Time')
+                            {
+                                TimeWD t = new TimeWD();
+                                t.workOrderbFOID = wd.SVMXC__Service_Order__c;
+                                t.workDetailbFOID = wd.id;
+                                //t.lineType = wd.SVMXC__Line_Type__c;
+                                t.lineType = System.Label.CLAPR15SRV84;
+                                t.activityType = wd.SVMXC__Activity_Type__c;
+                                t.hourType = wd.HourType__c;
+                                if(wd.SVMXC__Group_Member__c != null)
+                                {
+                                    if(TechnicianMap.containskey(wd.SVMXC__Group_Member__c))
+                                    {
+                                        t.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);
+                                    }
+                                }
+                                t.isBillable = wd.IsBillable__c;
+                                
+                                //t.startDateTime = String.valueOf(wd.SVMXC__Start_Date_and_Time__c);
+                                t.startDateTime = (wd.SVMXC__Start_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+                                //t.endDateTime = String.valueOf(wd.SVMXC__End_Date_and_Time__c);
+                                t.endDateTime =  (wd.SVMXC__End_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+                                t.totalTime = wd.TotalTime__c;
+                                t.workDescription = wd.SVMXC__Work_Description__c;
+                                t.workDetailPlannedbFOID = wd.SVMXC__Work_Detail__c;
+                                t.workDetailbFONumber = wd.Name;
+                                t.levelRequired = wd.Level_Required__c; //May Release Yassine 05052015
+                                TimeWDs.add(t);
+                            }
+                            else if(wd.SVMXC__Line_Type__c == 'Expenses'){
+                            
+                                ExpenseWD e = new ExpenseWD();
+                                e.workOrderbFOID = wd.SVMXC__Service_Order__c;
+                                e.workDetailbFOID = wd.id;
+                                e.lineType = System.Label.CLAPR15SRV84;
+                                e.expenseType = wd.SVMXC__Expense_Type__c;
+                                e.expenseDate = String.valueOf(wd.SVMXC__Date_Received__c);
+                                 if(wd.SVMXC__Group_Member__c != null)
+                                {
+                                    if(TechnicianMap.containskey(wd.SVMXC__Group_Member__c))
+                                    {
+                                        e.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);
+                                    }
+                                }
+                                e.isBillable = wd.IsBillable__c;
+                                //e.billingType = wd.
+                                e.expenseQuantity = wd.ExpenseQuantity__c;
+                                e.linePricePerUnit = wd.LinePricePerUnit__c;
+                                e.currencyIsoCode = wd.CurrencyIsoCode;
+                                e.workDescription = wd.SVMXC__Work_Description__c;
+                                e.workDetailPlannedbFOID = wd.SVMXC__Work_Detail__c;
+                                if(currencyMap.containskey(wd.id))
+                                e.linePricePerUnitCorporateCurrency = currencyMap.get(wd.id).LinePricePerUnit__c;
+                                e.workDetailbFONumber = wd.Name;
+                                e.levelRequired = wd.Level_Required__c; //May Release Yassine 05052015
+                                ExpenseWDs.add(e);
+                            }
                     
-						}
-						//Send only Work Detail Part that are related to a Part Order Line (Shipment), meaning the ones having PartsOrderLine__c not empty
-						if(wd.RecordTypeId == Parts && wd.PartsOrderLine__c != null){
-						
-							PartsWD p = new PartsWD();
-							p.workOrderbFOID = wd.SVMXC__Service_Order__c;
-							p.workDetailbFOID = wd.id;
-							p.workDetailbFONumber = wd.Name;
-							p.partOrderLinebFOID  = wd.PartsOrderLine__c;
-							p.partOrderLineType = wd.Part_Order_Line_Type__c;
-							p.TECH_BOPartsOrderLineRecordId = wd.PartsOrderLine__r.TECH_BOPartsOrderLineRecordId__c;
-							p.FOSKUReference = wd.PartsOrderLine__r.SKU__c;
-							p.BOMaterialReference =  wd.PartsOrderLine__r.BOMaterialReference__c;
-							p.sparePartbFOID = wd.PartsOrderLine__r.SVMXC__Product__c; // Yassine.B 02/04/2015 fix (name -> Id)
-							p.genericReference = wd.PartsOrderLine__r.Generic_reference__c;
-							p.freeTextReference =  wd.PartsOrderLine__r.Free_text_reference__c;
-							if(wd.SVMXC__Group_Member__c != null)
-							{
-								if(TechnicianMap.containskey(wd.SVMXC__Group_Member__c))
-								{
-									p.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);
-								}
-							}
-							p.isBillable = wd.IsBillable__c;
-							//p.expectedQuantity
-							p.shippedQuantity = wd.ShippedQuantity_del__c;
-							p.installedQuantity = wd.InstalledQuantity__c;
-							p.returnedQuantity = wd.ReturnedQuantity__c;
-							p.failedQuantity = wd.FailedQuantity__c;
-							p.leftOnsiteQuantity = wd.Left_Onsite_Qty__c;
-							p.notReturnReason =	wd.Not_Returned_Reason__c;
-							p.workDescription = wd.SVMXC__Work_Description__c;
-							p.expectedQuantity = wd.PartsOrderLine__r.SVMXC__Expected_Quantity2__c;
-							p.levelRequired = wd.Level_Required__c; //May Release Yassine 05052015							
-							PartsWDs.add(p);
-						
-						}                   
-						else if(wd.RecordTypeId == serviceproduct){
-							 ServiceProductsWD sp = new ServiceProductsWD();
-							 sp.workOrderbFOID = wd.SVMXC__Service_Order__c;
-							 sp.workDetailbFOID = wd.id;
-							 sp.workDetailbFONumber = wd.Name;
-							if(wd.SVMXC__Group_Member__c != null)
-							{
-								if(TechnicianMap.containskey(wd.SVMXC__Group_Member__c))
-								{
-									sp.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);
-								}
-							}
-							if(wd.SVMXC__Serial_Number__c != null)
-							{
-								if(IPUnitMap.containskey(wd.SVMXC__Serial_Number__c))
-								{
-									sp.InstalledProduct = IPUnitMap.get(wd.SVMXC__Serial_Number__c);
-								}
-							
-							}
-							sp.workDescription = wd.SVMXC__Work_Description__c;
-							sp.levelRequired = wd.Level_Required__c; //May Release Yassine 05052015
-							ServiceProductsWDs.add(sp);
+                        }
+                        //Send only Work Detail Part that are related to a Part Order Line (Shipment), meaning the ones having PartsOrderLine__c not empty
+                        if(wd.RecordTypeId == Parts && wd.PartsOrderLine__c != null){
+                        
+                            PartsWD p = new PartsWD();
+                            p.workOrderbFOID = wd.SVMXC__Service_Order__c;
+                            p.workDetailbFOID = wd.id;
+                            p.workDetailbFONumber = wd.Name;
+                            p.partOrderLinebFOID  = wd.PartsOrderLine__c;
+                            p.partOrderLineType = wd.Part_Order_Line_Type__c;
+                            p.TECH_BOPartsOrderLineRecordId = wd.PartsOrderLine__r.TECH_BOPartsOrderLineRecordId__c;
+                            p.FOSKUReference = wd.PartsOrderLine__r.SKU__c;
+                            p.BOMaterialReference =  wd.PartsOrderLine__r.BOMaterialReference__c;
+                            p.sparePartbFOID = wd.PartsOrderLine__r.SVMXC__Product__c; // Yassine.B 02/04/2015 fix (name -> Id)
+                            p.genericReference = wd.PartsOrderLine__r.Generic_reference__c;
+                            p.freeTextReference =  wd.PartsOrderLine__r.Free_text_reference__c;
+                            if(wd.SVMXC__Group_Member__c != null)
+                            {
+                                if(TechnicianMap.containskey(wd.SVMXC__Group_Member__c))
+                                {
+                                    p.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);
+                                }
+                            }
+                            p.isBillable = wd.IsBillable__c;
+                            //p.expectedQuantity
+                            p.shippedQuantity = wd.ShippedQuantity_del__c;
+                            p.installedQuantity = wd.InstalledQuantity__c;
+                            p.returnedQuantity = wd.ReturnedQuantity__c;
+                            p.failedQuantity = wd.FailedQuantity__c;
+                            p.leftOnsiteQuantity = wd.Left_Onsite_Qty__c;
+                            p.notReturnReason = wd.Not_Returned_Reason__c;
+                            p.workDescription = wd.SVMXC__Work_Description__c;
+                            p.expectedQuantity = wd.PartsOrderLine__r.SVMXC__Expected_Quantity2__c;
+                            p.levelRequired = wd.Level_Required__c; //May Release Yassine 05052015                          
+                            PartsWDs.add(p);
+                        
+                        }                   
+                        else if(wd.RecordTypeId == serviceproduct){
+                             ServiceProductsWD sp = new ServiceProductsWD();
+                             sp.workOrderbFOID = wd.SVMXC__Service_Order__c;
+                             sp.workDetailbFOID = wd.id;
+                             sp.workDetailbFONumber = wd.Name;
+                            if(wd.SVMXC__Group_Member__c != null)
+                            {
+                                if(TechnicianMap.containskey(wd.SVMXC__Group_Member__c))
+                                {
+                                    sp.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);
+                                }
+                            }
+                            if(wd.SVMXC__Serial_Number__c != null)
+                            {
+                                if(IPUnitMap.containskey(wd.SVMXC__Serial_Number__c))
+                                {
+                                    sp.InstalledProduct = IPUnitMap.get(wd.SVMXC__Serial_Number__c);
+                                }
+                            
+                            }
+                            sp.workDescription = wd.SVMXC__Work_Description__c;
+                            sp.levelRequired = wd.Level_Required__c; //May Release Yassine 05052015
+                            ServiceProductsWDs.add(sp);
                     
-						}
-						
-					
-					}
-				}
-				wDetail.TimeWDs = TimeWDs;
-				wDetail.ExpenseWDs = ExpenseWDs;
-				wDetail.ServiceProductsWDs = ServiceProductsWDs;
-				wDetail.PartsWDs = PartsWDs;
+                        }
+                        
+                    
+                    }
+                }
+                wDetail.TimeWDs = TimeWDs;
+                wDetail.ExpenseWDs = ExpenseWDs;
+                wDetail.ServiceProductsWDs = ServiceProductsWDs;
+                wDetail.PartsWDs = PartsWDs;
         }
     
         
@@ -2770,7 +2773,7 @@ global class WS_Work_Order{
                 SVMXC__Company__r.Name,SVMXC__Company__r.AccountLocalName__c,SVMXC__Company__r.Street__c,SVMXC__Company__r.StreetLocalLang__c,
                 SVMXC__Company__r.AdditionalAddress__c,SVMXC__Company__r.LocalAdditionalAddress__c,SVMXC__Company__r.ZipCode__c,
                 SVMXC__Company__r.City__c,SVMXC__Company__r.LocalCity__c,SVMXC__Company__r.Country__r.CountryCode__c,SVMXC__Company__r.StateProvince__c,
-                SVMXC__Company__r.StateProvince__r.StateProvinceCode__c,SVMXC__Company__r.RecordType.Name,
+                SVMXC__Company__r.StateProvince__r.StateProvinceCode__c,SVMXC__Company__r.RecordType.Name,UniqueSEIdentification__c,
                 CustomerSerialNumber__c, SVMXC__Serial_Lot_Number__c, SchneiderCommercialReference__c,SVMXC__Country__c,RecordType.Name from SVMXC__Installed_Product__c where id in :idset ])
             {
                 InstalledProduct ipu = new InstalledProduct();
@@ -2793,6 +2796,7 @@ global class WS_Work_Order{
                 ipu.installedAtLocalCity = ipobj.SVMXC__Company__r.LocalCity__c;
                 ipu.installedAtCountryCode = ipobj.SVMXC__Company__r.Country__r.CountryCode__c;
                 ipu.installedAtStateProvinceCode = ipobj.SVMXC__Company__r.StateProvince__r.StateProvinceCode__c;
+				ipu.uniqueDigitalID = ipobj.UniqueSEIdentification__c;
                 
                 //ipu.installedAtRecordTypeName = ipobj.RecordType.name;
                 ipu.installedAtRecordTypeName = ipobj.SVMXC__Company__r.RecordType.Name; // Yassine.B 13/03/2015 - fix the record type name field on Account
@@ -2935,6 +2939,7 @@ global class WS_Work_Order{
             mip.installedAtCountryCode = wo.SVMXC__Component__r.SVMXC__Company__r.Country__r.CountryCode__c;
             mip.installedAtStateProvinceCode = wo.SVMXC__Component__r.SVMXC__Company__r.StateProvince__r.StateProvinceCode__c;
             mip.installedAtRecordTypeName  = wo.SVMXC__Component__r.SVMXC__Company__r.RecordType.Name;
+			mip.uniqueDigitalID = wo.SVMXC__Component__r.UniqueSEIdentification__c;
             //mip.installedAtRecordTypeName = 'hari test';
             
 
@@ -2959,9 +2964,9 @@ global class WS_Work_Order{
              woresult.soldToAccountbFOID = wo.SoldToAccount__c;
             //woresult.mainInstalledProduct = String.valueOf(wo.SVMXC__Component__c);
              woresult.productbFOID = String.valueOf(wo.SVMXC__Product__c);
-			 // QC 11658
+             // QC 11658
              //woresult.parentWOBackOfficeReference = wo.Parent_Work_Order__r.BackOfficeReference__c;
-			 woresult.parentWOBackOfficeReference = wo.Parent_Work_Order__r.TECH_WOBackOfficeRecordID__c;
+             woresult.parentWOBackOfficeReference = wo.Parent_Work_Order__r.TECH_WOBackOfficeRecordID__c;
              woresult.caseNumber = wo.SVMXC__Case__r.CaseNumber;
 
              woresult.WOBackOfficeReference = wo.BackOfficeReference__c;
@@ -2969,8 +2974,8 @@ global class WS_Work_Order{
              woresult.TECH_WOBackOfficeRecordID = wo.TECH_WOBackOfficeRecordID__c;
              
              woresult.WOGBackOfficeReference =  wo.WorkOrderGroup__r.BackOfficeReference__c;
-             woresult.TECH_FOLastUpdateTimestamp = wo.TECH_FOLastUpdate_Timestamp__c;
-			 //woresult.TECH_FOLastUpdateTimestamp = (wo.TECH_FOLastUpdate_Timestamp__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+             woresult.TECH_FOLastUpdateTimestamp = (wo.LastModifiedDate).formatGMT('yyyy-MM-dd HH:mm:ss') ;
+             //woresult.TECH_FOLastUpdateTimestamp = (wo.TECH_FOLastUpdate_Timestamp__c).formatGMT('yyyy-MM-dd HH:mm:ss');
              woresult.closedOn =  wo.SVMXC__Closed_On__c;
              woresult.plannedDuration =  wo.PlannedServiceDuration__c;
 
@@ -2999,7 +3004,7 @@ global class WS_Work_Order{
         wo.SVMXC__Billing_Type__c =  wou.billingType;   
         wo.CustomerRequestedDate__c = wou.customerRequestedDate;
         wo.SVMXC__Problem_Description__c =wou.workOrderReason;      
-        wo.TECH_FOLastUpdate_Timestamp__c =wou.TECH_FOLastUpdateTimestamp;
+        //wo.TECH_FOLastUpdate_Timestamp__c =wou.TECH_FOLastUpdateTimestamp;
         wo.PONumber__c  = wou.PONumber;
         wo.salesOrderLineNumber__c = wou.salesOrderLineNumber;
         wo.Customer_Reference_Number__c = wou.customerReferenceNumber;
@@ -3124,7 +3129,7 @@ global class WS_Work_Order{
     }
     public Static String getIPQuery(){
         
-                String Query=' select id, name ,GoldenAssetId__c,SVMXC__Company__c,SVMXC__Company__r.SEAccountID__c,CustomerSerialNumber__c, SchneiderCommercialReference__c,SVMXC__Company__r.Country__r.CountryCode__c from SVMXC__Installed_Product__c ';
+                String Query=' select id, name ,GoldenAssetId__c,SVMXC__Company__c,SVMXC__Company__r.SEAccountID__c,CustomerSerialNumber__c, SchneiderCommercialReference__c,SVMXC__Company__r.Country__r.CountryCode__c,UniqueSEIdentification__c from SVMXC__Installed_Product__c ';
         
                 String QueryString ='';
                 String WhereClause ='';
@@ -3614,4 +3619,4 @@ global class WS_Work_Order{
         return response;
      }
 
-}
+}	
