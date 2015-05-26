@@ -147,7 +147,7 @@ global class WS_Work_Order{
         webservice String installedAtLocalCity;     
         webservice String installedAtStateProvinceCode;
         webservice String installedAtRecordTypeName;
-		webservice String uniqueDigitalID;
+        webservice String uniqueDigitalID;
         
         
        
@@ -2796,7 +2796,7 @@ global class WS_Work_Order{
                 ipu.installedAtLocalCity = ipobj.SVMXC__Company__r.LocalCity__c;
                 ipu.installedAtCountryCode = ipobj.SVMXC__Company__r.Country__r.CountryCode__c;
                 ipu.installedAtStateProvinceCode = ipobj.SVMXC__Company__r.StateProvince__r.StateProvinceCode__c;
-				ipu.uniqueDigitalID = ipobj.UniqueSEIdentification__c;
+                ipu.uniqueDigitalID = ipobj.UniqueSEIdentification__c;
                 
                 //ipu.installedAtRecordTypeName = ipobj.RecordType.name;
                 ipu.installedAtRecordTypeName = ipobj.SVMXC__Company__r.RecordType.Name; // Yassine.B 13/03/2015 - fix the record type name field on Account
@@ -2939,7 +2939,7 @@ global class WS_Work_Order{
             mip.installedAtCountryCode = wo.SVMXC__Component__r.SVMXC__Company__r.Country__r.CountryCode__c;
             mip.installedAtStateProvinceCode = wo.SVMXC__Component__r.SVMXC__Company__r.StateProvince__r.StateProvinceCode__c;
             mip.installedAtRecordTypeName  = wo.SVMXC__Component__r.SVMXC__Company__r.RecordType.Name;
-			mip.uniqueDigitalID = wo.SVMXC__Component__r.UniqueSEIdentification__c;
+            mip.uniqueDigitalID = wo.SVMXC__Component__r.UniqueSEIdentification__c;
             //mip.installedAtRecordTypeName = 'hari test';
             
 
@@ -3619,4 +3619,4 @@ global class WS_Work_Order{
         return response;
      }
 
-}	
+}
