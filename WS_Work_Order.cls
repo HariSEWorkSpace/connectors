@@ -60,7 +60,7 @@ global class WS_Work_Order{
             webservice String caseNumber; 
             webservice String BackOfficeBillToValid;
             webservice String plantName; //Yassine.B 18/03/2015
-            webservice Datetime closedOn;
+            webservice String closedOn;
             webservice Decimal plannedDuration;
             
             
@@ -1370,7 +1370,7 @@ global class WS_Work_Order{
                     a.name=porder.To_Name__c;
                     a.Street=porder.SVMXC__Destination_Street__c;
                     a.ZipCode=porder.SVMXC__Destination_Zip__c;
-                    a.City=porder.SVMXC__Destination_Zip__c;
+                    a.City=porder.SVMXC__Destination_City__c;
                     a.CountryCode=porder.To_Country__r.CountryCode__c;
                     a.StateProvinceCode=porder.To_State__r.StateProvinceCode__c;
                 }
@@ -2190,7 +2190,7 @@ global class WS_Work_Order{
                SVMXC__Component__r.SVMXC__Company__r.Country__r.CountryCode__c,SVMXC__Component__r.SVMXC__Company__r.Name,SVMXC__Component__r.SVMXC__Company__r.AccountLocalName__c,
                SVMXC__Component__r.SVMXC__Company__r.Street__c,SVMXC__Component__r.SVMXC__Company__r.StreetLocalLang__c,SVMXC__Component__r.SVMXC__Company__r.AdditionalAddress__c,
                SVMXC__Component__r.SVMXC__Company__r.LocalAdditionalAddress__c,SVMXC__Component__r.SVMXC__Company__r.ZipCode__c,SVMXC__Component__r.SVMXC__Company__r.City__c,
-               SVMXC__Component__r.SVMXC__Company__r.LocalCity__c, SVMXC__Component__r.SVMXC__Company__r.RecordType.Name,
+               SVMXC__Component__r.SVMXC__Company__r.LocalCity__c, SVMXC__Component__r.SVMXC__Company__r.RecordType.Name,SVMXC__Component__r.UniqueSEIdentification__c,
                SVMXC__Component__r.SVMXC__Company__r.StateProvince__r.StateProvinceCode__c,SVMXC__Service_Contract__r.BackOfficeReference__c,ServiceLine__r.BackOfficeReference__c,
                Sales_Order_Number__c,salesOrderLineNumber__c,Customer_Reference_Number__c,PONumber__c,SVMXC__Primary_Territory__r.Name,CustomerReferenceNumber__c,SVMXC__Case__c,SVMXC__Case__r.CaseNumber,SVMXC__Component__r.RecordType.Name,PlannedServiceDuration__c,
                EstimatedExpenseCost__c, Estimated_Labor_Cost__c, EstimatedMaterialCost__c, QuotationNumber__c,CurrencyIsoCode,SVMXC__Problem_Description__c, SVMXC__Primary_Territory__r.Plant__r.Name,TECH_WOBackOfficeRecordID__c,TECH_FOLastUpdate_Timestamp__c,LastModifiedDate  from SVMXC__Service_Order__c where BackOfficeSystem__c =:backOfficeSystem and  TECH_TechnicaClosure__c='To Be Processed' and SVMXC__Order_Status__c ='Service Validated' limit 150];
@@ -2883,7 +2883,8 @@ global class WS_Work_Order{
             //woresult.serviceBusinessUnit = wo.BusinessUnit__c;
             woresult.serviceBusinessUnit = wo.Service_Business_Unit__c; // Yassine.B 13/03/2015 - fix with right BU field
             woresult.priority = wo.SVMXC__Priority__c;
-            woresult.scheduledDateTime = String.valueOf(wo.SVMXC__Scheduled_Date_Time__c);
+            //woresult.scheduledDateTime = String.valueOf(wo.SVMXC__Scheduled_Date_Time__c);
+			woresult.scheduledDateTime = (wo.SVMXC__Scheduled_Date_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
             woresult.workOrderGroupbFOID = wo.WorkOrderGroup__c;            
             woresult.workOrderName = wo.WorkOrderName__c;
             woresult.workOrderReason = wo.SVMXC__Problem_Description__c;
@@ -2976,7 +2977,8 @@ global class WS_Work_Order{
              woresult.WOGBackOfficeReference =  wo.WorkOrderGroup__r.BackOfficeReference__c;
              woresult.TECH_FOLastUpdateTimestamp = (wo.LastModifiedDate).formatGMT('yyyy-MM-dd HH:mm:ss') ;
              //woresult.TECH_FOLastUpdateTimestamp = (wo.TECH_FOLastUpdate_Timestamp__c).formatGMT('yyyy-MM-dd HH:mm:ss');
-             woresult.closedOn =  wo.SVMXC__Closed_On__c;
+             //woresult.closedOn =  wo.SVMXC__Closed_On__c;
+			 woresult.closedOn =  (wo.SVMXC__Closed_On__c).formatGMT('yyyy-MM-dd HH:mm:ss');
              woresult.plannedDuration =  wo.PlannedServiceDuration__c;
 
 
