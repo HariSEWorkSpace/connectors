@@ -2990,7 +2990,10 @@ global class WS_Work_Order{
              woresult.TECH_WOBackOfficeRecordID = wo.TECH_WOBackOfficeRecordID__c;
              
              woresult.WOGBackOfficeReference =  wo.WorkOrderGroup__r.BackOfficeReference__c;
-             woresult.TECH_FOLastUpdateTimestamp = (wo.LastModifiedDate).formatGMT('yyyy-MM-dd HH:mm:ss') ;
+			 if(wo.LastModifiedDate != null )
+			 {
+				woresult.TECH_FOLastUpdateTimestamp = (wo.LastModifiedDate).formatGMT('yyyy-MM-dd HH:mm:ss') ;
+			 }
              //woresult.TECH_FOLastUpdateTimestamp = (wo.TECH_FOLastUpdate_Timestamp__c).formatGMT('yyyy-MM-dd HH:mm:ss');
              //woresult.closedOn =  wo.SVMXC__Closed_On__c;
              if(wo.SVMXC__Closed_On__c != null){
