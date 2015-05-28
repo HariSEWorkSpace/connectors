@@ -1879,9 +1879,9 @@ global class WS_Work_Order{
                     }
                     else if(request.Event == 'WO.SYNC'){
                         if(request.success){
-                            if(request.BackOfficeBillToValid != null){
-                                wo.Back_Office_Bill__c = request.BackOfficeBillToValid;
-                            }
+                            //if(request.BackOfficeBillToValid != null){
+                            //    wo.Back_Office_Bill__c = request.BackOfficeBillToValid;
+                            //}
                             wo.SynchronizationLog__c = 'Work Order SYNCED with Back Office';
 
                         }
@@ -1891,6 +1891,11 @@ global class WS_Work_Order{
                         wo.LastSynchronizationDate__c = system.now();
 
                     }
+                    //Yassine Bouargoub 27/05/2015 - DEF-6925 - START
+                    if(request.BackOfficeBillToValid != null){
+                        wo.Back_Office_Bill__c = request.BackOfficeBillToValid;
+                    }
+                    //Yassine Bouargoub 27/05/2015 - DEF-6925 - END
                     try{
                         System.debug('\n CLog : '+wo);
                         System.debug('\n CLog : '+wog);
@@ -2462,9 +2467,13 @@ global class WS_Work_Order{
                             
                             t.isBillable = wd.IsBillable__c;
                             //t.startDateTime = String.valueOf(wd.SVMXC__Start_Date_and_Time__c);
-                            t.startDateTime = (wd.SVMXC__Start_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+                            if(wd.SVMXC__Start_Date_and_Time__c != null){
+                                t.startDateTime = (wd.SVMXC__Start_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+                            }
                             //t.endDateTime = String.valueOf(wd.SVMXC__End_Date_and_Time__c);
-                            t.endDateTime =  (wd.SVMXC__End_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+                            if(wd.SVMXC__End_Date_and_Time__c != null){
+                                t.endDateTime =  (wd.SVMXC__End_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+                            }
                             t.totalTime = wd.TotalTime__c;
                             t.totalTime = wd.TotalTime__c;
                             t.workDescription = wd.SVMXC__Work_Description__c;
@@ -2650,9 +2659,13 @@ global class WS_Work_Order{
                                 t.isBillable = wd.IsBillable__c;
                                 
                                 //t.startDateTime = String.valueOf(wd.SVMXC__Start_Date_and_Time__c);
-                                t.startDateTime = (wd.SVMXC__Start_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+                                if(wd.SVMXC__Start_Date_and_Time__c != null){
+                                    t.startDateTime = (wd.SVMXC__Start_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+                                }
                                 //t.endDateTime = String.valueOf(wd.SVMXC__End_Date_and_Time__c);
-                                t.endDateTime =  (wd.SVMXC__End_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+                                if(wd.SVMXC__End_Date_and_Time__c != null){
+                                    t.endDateTime =  (wd.SVMXC__End_Date_and_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+                                }
                                 t.totalTime = wd.TotalTime__c;
                                 t.workDescription = wd.SVMXC__Work_Description__c;
                                 t.workDetailPlannedbFOID = wd.SVMXC__Work_Detail__c;
@@ -2884,7 +2897,9 @@ global class WS_Work_Order{
             woresult.serviceBusinessUnit = wo.Service_Business_Unit__c; // Yassine.B 13/03/2015 - fix with right BU field
             woresult.priority = wo.SVMXC__Priority__c;
             //woresult.scheduledDateTime = String.valueOf(wo.SVMXC__Scheduled_Date_Time__c);
-			woresult.scheduledDateTime = (wo.SVMXC__Scheduled_Date_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+            if(wo.SVMXC__Scheduled_Date_Time__c != null){
+                woresult.scheduledDateTime = (wo.SVMXC__Scheduled_Date_Time__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+            }
             woresult.workOrderGroupbFOID = wo.WorkOrderGroup__c;            
             woresult.workOrderName = wo.WorkOrderName__c;
             woresult.workOrderReason = wo.SVMXC__Problem_Description__c;
@@ -2978,13 +2993,10 @@ global class WS_Work_Order{
              woresult.TECH_FOLastUpdateTimestamp = (wo.LastModifiedDate).formatGMT('yyyy-MM-dd HH:mm:ss') ;
              //woresult.TECH_FOLastUpdateTimestamp = (wo.TECH_FOLastUpdate_Timestamp__c).formatGMT('yyyy-MM-dd HH:mm:ss');
              //woresult.closedOn =  wo.SVMXC__Closed_On__c;
-			 woresult.closedOn =  (wo.SVMXC__Closed_On__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+             if(wo.SVMXC__Closed_On__c != null){
+                woresult.closedOn =  (wo.SVMXC__Closed_On__c).formatGMT('yyyy-MM-dd HH:mm:ss');
+             }
              woresult.plannedDuration =  wo.PlannedServiceDuration__c;
-
-
-
-
-
     }
     
     public static SVMXC__Service_Order__c getWorkOrder(WorkOrder wou ){
