@@ -231,6 +231,7 @@ global class WS_Service_Contract{
     public static Set<String> emailAddressset = new Set<String>();
     public static Set<String> mobilePhoneset = new Set<String>();
     public static Set<String> workPhoneset = new Set<String>();
+	public Static Set<String> AccountIDSet = new Set<String>();
     
     public static ServiceContractResult response = new ServiceContractResult();
     public static Map<id,List<CoveredProductResult>> slidcpResultsMap;
@@ -251,6 +252,12 @@ global class WS_Service_Contract{
 						if( !checkExistingServiceContract(request)){
 						
 								Savepoint sp = Database.setSavepoint();
+								if(request.soldToAccount != null)
+								AccountIDSet.add(request.soldToAccount);
+								if(request.billToAccount != null)
+								AccountIDSet.add(request.billToAccount);
+								if(request.installedAtAccount != null)
+								AccountIDSet.add(request.installedAtAccount);
 								SVMXC__Service_Contract__c header = new SVMXC__Service_Contract__c();
 								if(request.ownerSESA != null && request.ownerSESA !=''){
 									sesaset.add(request.ownerSESA);
@@ -2078,6 +2085,14 @@ global class WS_Service_Contract{
                     else
                     WhereClause +=  ' WorkPhone__c in ('+ SOQLListFormat(workPhoneset) +') ';
                 }
+				if(AccountIDSet != null && AccountIDSet.size()>0)
+				{
+					if(WhereClause.length()>0)
+                    WhereClause +=  ' OR AccountId in ('+ SOQLListFormat(AccountIDSet) +') ';
+                    else
+                    WhereClause +=  ' AccountId in ('+ SOQLListFormat(AccountIDSet) +') ';
+					
+				}
                 Query =  QueryString +' where '+WhereClause+' Limit 50000';
                 System.debug('\n scLog :'+Query);
                 return Query;
