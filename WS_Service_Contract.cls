@@ -2078,7 +2078,7 @@ global class WS_Service_Contract{
                     else
                     WhereClause +=  ' WorkPhone__c in ('+ SOQLListFormat(workPhoneset) +') ';
                 }
-                Query =  QueryString +' where '+WhereClause;
+                Query =  QueryString +' where '+WhereClause+' Limit 50000';
                 System.debug('\n scLog :'+Query);
                 return Query;
         
