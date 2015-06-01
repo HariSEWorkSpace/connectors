@@ -2334,20 +2334,30 @@ global class WS_Work_Order{
             if(worders != null && worders.size()>0)
             woMap.putAll(worders);
             for(WorkOrderSyncDetails wosd: toProcess){
-                SVMXC__Service_Order__c wo = woMap.get(wosd.workOrderbFOId);
-                if(wosd.success){
-                    wo.SynchronizationLog__c = 'Work Order TECHNICALLY CLOSED in Back Office';
-                    wo.TECH_TechnicaClosure__c ='Processed';
-                    wo.LastSynchronizationDate__c = system.now();
-                }
-                else{
-                    wo.SynchronizationLog__c = 'Work Order NOT TECHNICALLY CLOSED in Back Office due to  ['+wosd.BOerrorMessage+']';
-                    wo.TECH_TechnicaClosure__c ='Failed';
-                    wo.LastSynchronizationDate__c = system.now();
-                   
-                
-                }
-                 sorder.add(wo);
+				if(woMap.containskey(wosd.workOrderbFOId)){
+					SVMXC__Service_Order__c wo = woMap.get(wosd.workOrderbFOId);
+					
+					if(wosd.success){
+						wo.SynchronizationLog__c = 'Work Order TECHNICALLY CLOSED in Back Office';
+						wo.TECH_TechnicaClosure__c ='Processed';
+						wo.LastSynchronizationDate__c = system.now();
+					}
+					else{
+						wo.SynchronizationLog__c = 'Work Order NOT TECHNICALLY CLOSED in Back Office due to  ['+wosd.BOerrorMessage+']';
+						wo.TECH_TechnicaClosure__c ='Failed';
+						wo.LastSynchronizationDate__c = system.now();
+					   
+					
+					}
+					sorder.add(wo);
+				 }
+				 else{
+					WorkOrderSyncDetailsResult wr = new WorkOrderSyncDetailsResult();
+					wr.workOrderbFOId = wosd.workOrderbFOId;
+                    wr.errorMessage = " work order not exist ";
+					wr.success = false; 
+					results.add(wr);
+				 }
             }
             if( sorder != null && sorder.size()>0 ){
                 Database.SaveResult[] worder_results  = CreateOrUpdateServices((List<Sobject>)worders,'UPDATE');
@@ -2461,7 +2471,7 @@ global class WS_Work_Order{
                             {
                                 if(TechnicianMap.containskey(wd.SVMXC__Group_Member__c))
                                 {
-                                    t.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);
+                                    t.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);	
                                 }
                             }
                             
