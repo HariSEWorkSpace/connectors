@@ -2354,7 +2354,7 @@ global class WS_Work_Order{
 				 else{
 					WorkOrderSyncDetailsResult wr = new WorkOrderSyncDetailsResult();
 					wr.workOrderbFOId = wosd.workOrderbFOId;
-                    wr.errorMessage = " work order not exist ";
+                    wr.errorMessage = ' work order not exist ';
 					wr.success = false; 
 					results.add(wr);
 				 }
