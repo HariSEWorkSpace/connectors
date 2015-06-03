@@ -1301,7 +1301,7 @@ global class WS_Work_Order{
         List<SVMXC__RMA_Shipment_Order__c> partsOrderList = [select id, Name,SVMXC__Order_Status__c,Service_level__c,SVMXC__Shipping_Receiving_Notes__c,Freight_terms__c,Parts_SLA_terms__c,On_site_SLA_terms__c,SVMXC__Contact__c,SVMXC__Contact__r.SEContactID__c,SVMXC__Contact__r.FirstName,SVMXC__Contact__r.LocalFirstName__c,SVMXC__Contact__r.MidInit__c,
         SVMXC__Contact__r.LocalMidInit__c,SVMXC__Contact__r.LastName,SVMXC__Contact__r.LocalLastName__c,SVMXC__Contact__r.Email,SVMXC__Contact__r.MobilePhone,SVMXC__Contact__r.WorkPhone__c,
         Ship_to__r.SEAccountID__c,Ship_to__r.Name,Ship_to__r.AccountLocalName__c,Ship_to__r.Street__c,Ship_to__r.StreetLocalLang__c,Ship_to__r.AdditionalAddress__c,Ship_to__r.LocalAdditionalAddress__c,Ship_to__r.ZipCode__c,Ship_to__r.City__c,Ship_to__r.LocalCity__c,Ship_to__r.Country__r.CountryCode__c,Ship_to__r.StateProvince__c,Ship_to__c,Attention_To__r.FederationIdentifier,Attention_To__r.Email,
-        Ship_to__r.RecordType.Name,Ship_to__r.StateProvince__r.StateProvinceCode__c,RecordType.Name, To_Name__c, SVMXC__Destination_Street__c, SVMXC__Destination_Zip__c, SVMXC__Destination_City__c,To_Country__r.CountryCode__c,To_State__r.StateProvinceCode__c  from SVMXC__RMA_Shipment_Order__c where SVMXC__Service_Order__c = : wo.id AND SVMXC__Order_Status__c='Open' and RecordTypeId =:partsorderrtId ];
+        Ship_to__r.RecordType.Name,Ship_to__r.StateProvince__r.StateProvinceCode__c,RecordType.Name, To_Name__c, SVMXC__Destination_Street__c, SVMXC__Destination_Zip__c, SVMXC__Destination_City__c,To_Country__r.CountryCode__c,To_State__r.StateProvinceCode__c, Shipment_mode__c  from SVMXC__RMA_Shipment_Order__c where SVMXC__Service_Order__c = : wo.id AND SVMXC__Order_Status__c='Open' and RecordTypeId =:partsorderrtId ];
         
         System.debug('\n WWS Log: '+partsOrderList.size());
         
@@ -1411,7 +1411,7 @@ global class WS_Work_Order{
                         polu.createdBySESAID = pol.createdby.FederationIdentifier;
                         polu.createdByFirstName = pol.createdby.FirstName;
                         polu.createdByLastName = pol.createdby.LastName;
-                        polu.shipmentMode = pol.Shipment_mode__c;
+                        polu.shipmentMode = porder.Shipment_mode__c;
                         polu.partOrderLineType = pol.RecordType.Name;
                         polu.currencyIsoCode = pol.CurrencyIsoCode;
                         polu.linePrice = pol.SVMXC__Line_Price2__c;
@@ -2334,30 +2334,30 @@ global class WS_Work_Order{
             if(worders != null && worders.size()>0)
             woMap.putAll(worders);
             for(WorkOrderSyncDetails wosd: toProcess){
-				if(woMap.containskey(wosd.workOrderbFOId)){
-					SVMXC__Service_Order__c wo = woMap.get(wosd.workOrderbFOId);
-					
-					if(wosd.success){
-						wo.SynchronizationLog__c = 'Work Order TECHNICALLY CLOSED in Back Office';
-						wo.TECH_TechnicaClosure__c ='Processed';
-						wo.LastSynchronizationDate__c = system.now();
-					}
-					else{
-						wo.SynchronizationLog__c = 'Work Order NOT TECHNICALLY CLOSED in Back Office due to  ['+wosd.BOerrorMessage+']';
-						wo.TECH_TechnicaClosure__c ='Failed';
-						wo.LastSynchronizationDate__c = system.now();
-					   
-					
-					}
-					sorder.add(wo);
-				 }
-				 else{
-					WorkOrderSyncDetailsResult wr = new WorkOrderSyncDetailsResult();
-					wr.workOrderbFOId = wosd.workOrderbFOId;
+                if(woMap.containskey(wosd.workOrderbFOId)){
+                    SVMXC__Service_Order__c wo = woMap.get(wosd.workOrderbFOId);
+                    
+                    if(wosd.success){
+                        wo.SynchronizationLog__c = 'Work Order TECHNICALLY CLOSED in Back Office';
+                        wo.TECH_TechnicaClosure__c ='Processed';
+                        wo.LastSynchronizationDate__c = system.now();
+                    }
+                    else{
+                        wo.SynchronizationLog__c = 'Work Order NOT TECHNICALLY CLOSED in Back Office due to  ['+wosd.BOerrorMessage+']';
+                        wo.TECH_TechnicaClosure__c ='Failed';
+                        wo.LastSynchronizationDate__c = system.now();
+                       
+                    
+                    }
+                    sorder.add(wo);
+                 }
+                 else{
+                    WorkOrderSyncDetailsResult wr = new WorkOrderSyncDetailsResult();
+                    wr.workOrderbFOId = wosd.workOrderbFOId;
                     wr.errorMessage = ' work order not exist ';
-					wr.success = false; 
-					results.add(wr);
-				 }
+                    wr.success = false; 
+                    results.add(wr);
+                 }
             }
             if( sorder != null && sorder.size()>0 ){
                 Database.SaveResult[] worder_results  = CreateOrUpdateServices((List<Sobject>)worders,'UPDATE');
@@ -2471,7 +2471,7 @@ global class WS_Work_Order{
                             {
                                 if(TechnicianMap.containskey(wd.SVMXC__Group_Member__c))
                                 {
-                                    t.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);	
+                                    t.FSR = TechnicianMap.get(wd.SVMXC__Group_Member__c);   
                                 }
                             }
                             
@@ -3000,10 +3000,10 @@ global class WS_Work_Order{
              woresult.TECH_WOBackOfficeRecordID = wo.TECH_WOBackOfficeRecordID__c;
              
              woresult.WOGBackOfficeReference =  wo.WorkOrderGroup__r.BackOfficeReference__c;
-			 if(wo.LastModifiedDate != null )
-			 {
-				woresult.TECH_FOLastUpdateTimestamp = (wo.LastModifiedDate).formatGMT('yyyy-MM-dd HH:mm:ss') ;
-			 }
+             if(wo.LastModifiedDate != null )
+             {
+                woresult.TECH_FOLastUpdateTimestamp = (wo.LastModifiedDate).formatGMT('yyyy-MM-dd HH:mm:ss') ;
+             }
              //woresult.TECH_FOLastUpdateTimestamp = (wo.TECH_FOLastUpdate_Timestamp__c).formatGMT('yyyy-MM-dd HH:mm:ss');
              //woresult.closedOn =  wo.SVMXC__Closed_On__c;
              if(wo.SVMXC__Closed_On__c != null){

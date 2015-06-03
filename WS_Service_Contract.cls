@@ -231,328 +231,328 @@ global class WS_Service_Contract{
     public static Set<String> emailAddressset = new Set<String>();
     public static Set<String> mobilePhoneset = new Set<String>();
     public static Set<String> workPhoneset = new Set<String>();
-	public Static Set<String> AccountIDSet = new Set<String>();
+    public Static Set<String> AccountIDSet = new Set<String>();
     
     public static ServiceContractResult response = new ServiceContractResult();
     public static Map<id,List<CoveredProductResult>> slidcpResultsMap;
     public static Map<id , String> slidslrefMap = new map<Id, String>();
     public static Set<id> ipneedtomach = new Set<id>();
-	
-	
+    
+    
     webservice static  ServiceContractResult bulkCreateServiceContracts(ServiceContract request){        
                 
             Set<String> sesaset = new Set<String>();                
             response = new ServiceContractResult();
-			response.errorMessage ='';
+            response.errorMessage ='';
             List<Sobject> conList = new List<Sobject>();
             Boolean hasError = false;
             if(request != null ){                 
                 if(mandatoryCheck(request)){
-					
-						if( !checkExistingServiceContract(request)){
-						
-								Savepoint sp = Database.setSavepoint();
-								if(request.soldToAccount != null)
-								AccountIDSet.add(request.soldToAccount);
-								if(request.billToAccount != null)
-								AccountIDSet.add(request.billToAccount);
-								if(request.installedAtAccount != null)
-								AccountIDSet.add(request.installedAtAccount);
-								SVMXC__Service_Contract__c header = new SVMXC__Service_Contract__c();
-								if(request.ownerSESA != null && request.ownerSESA !=''){
-									sesaset.add(request.ownerSESA);
-								}
-								if(request.salesRepSESA != null && request.salesRepSESA !=''){
-									sesaset.add(request.salesRepSESA);
-								}
-								if(sesaset != null && sesaset.size()>0)
-								{
-									for(User u: [select id, SESAExternalID__c from user where SESAExternalID__c in : sesaset ])
-									{
-										userSESAMap.put(u.SESAExternalID__c , u);
-										userIdMap.put(u.id , u);
-									}
-								}
-								
-								
-								if(request.soldToContact != null){getContactFields(request.soldToContact);}
-								if(request.billToContact != null){getContactFields(request.billToContact);}
-								if(request.mainInstalledAtContact != null){getContactFields(request.mainInstalledAtContact);}
-								
-								if(GoldenIDset.Size()>0 || firstNameset.size()>0 || localFirstNameset.size()>0 || 
-								   middleInitialset.size()>0  || lastNameset.size()>0 ||
-								   localLastNameset.size()>0 || emailAddressset.size()>0 || mobilePhoneset.size()>0 || workPhoneset.size()>0 )
-								{
-										 String Querystr = getContactQuery();                        
-										 conList = Database.query(Querystr);
-										 System.debug('\n SCLog : '+conList.size());                         
-										 System.debug('\n SCLog : '+conList);
-								}
-								
-								
-								SVMXC__Service_Contract__c sctoCreate =ContactInfo(request, getServiceContractHeader(request,ServiceContractRT) ,conList );
-								
-								//if(request.RenewedFrom != null )
-								//SVMXC__Service_Contract__c rf = [Select id, ,SVMXC__Renewal_Number__c where id = :request.RenewedFrom];
-								
-								
-								  
-								System.debug('\n SCLog : '+sctoCreate);
-								
-								Database.SaveResult header_result = CreateOrUpdateServices((List<Sobject>)new List<SVMXC__Service_Contract__c>{sctoCreate},'CREATE')[0];
-								String HErroMessage ='';
-								Boolean HeaderSuccess = false;
-								if (!header_result.isSuccess()) {                   
-									hasError = true;
-									for(Database.Error err : header_result.getErrors()) {
-										HErroMessage= ' '+err.getFields()+' : '+err.getMessage();                              
-									}
-									response.success = false;
-									response.errorMessage = 'Error on Creation of Service Contract : ' + HErroMessage;     
-									response.BOReferenceHeader =sctoCreate.BackOfficeReference__c; 
-									response.BOSystem = sctoCreate.BackOfficeSystem__c;                        
-									response.type ='CREATE';
-									System.debug('\n CLog : Error '+HErroMessage);              
-									
-								}
-								else{
-									
-									header =[select id, name,SVMXC__Service_Contract_Notes__c,SoldtoAccount__c,DefaultInstalledAtAccount__c,BillToAccount__c,
-																	SVMXC__Start_Date__c,SVMXC__End_Date__c,SVMXC__Contract_Price2__c,CurrencyIsoCode,IsEvergreen__c,
-																	LeadingBusinessBU__c,SendCustomerRenewalNotification__c,OwnerId,SVMXC__Sales_Rep__c,Status__c,PODate__c,
-																	PONumber__c,InitialOpportunity__c,SVMXC__Contact__c,SVMXC__Renewed_From__c,SVMXC__Renewal_Notes__c,
-																	CountryofBackOffice__c,BackOfficeSystem__c,BackOfficeReference__c,RecordTypeId from SVMXC__Service_Contract__c where id = : header_result.getId() ];
-									response.bFOContractID = header.id;                     
-									response.success = true; 
-									response.BOReferenceHeader = header.BackOfficeReference__c; 
-									response.BOSystem = header.BackOfficeSystem__c; 
-									response.type ='CREATE';
-									response.ServiceLineResults = new   List<ServiceLineResult>(); 
-									HeaderSuccess = true;
-								}
-								
-								if(HeaderSuccess){                  
-									// Processing Service Lines
-									List<SVMXC__Service_Contract__c> servicelineslist =new List<SVMXC__Service_Contract__c>();
-									List<ServiceLineResult> servicelineResuts = new List<ServiceLineResult>();
-									Map<string, List<CoveredProduct>> slbrefCPListMap = new Map<string,List<CoveredProduct>>();
-									set<String> errbref = new set<String>();
-									Set<id> slidset = new Set<id>();
-									Map<String , id> slrefslidMap = new map<String, id>();
-									
-									Set<String> ipGoldenIdset = new Set<String>(); 
-									Set<String> productExtIdset = new Set<String>();
-									Set<id> ipIdSet = new Set<id>();
-									
-									/*
-									if(request.serviceLines != null && request.serviceLines.size()>0){ 
-										
-										for(ServiceLine usl: request.serviceLines){
-											if(usl.SKUComRef != null && usl.SKUComRef !='')
-											 productExtIdset.add(usl.SKUComRef);
-										}
-									}
-									
-									if(productExtIdset != null && productExtIdset.size()>0){
-										
-										for(Product2 prod : [select id, ExtProductId__c from Product2 where ExtProductId__c in : productExtIdset])
-										{
-											productMap.put(prod.ExtProductId__c,prod);
-										}
-									}
-									
-									System.debug('\n SC Log: '+productMap);
-									*/
-									if(request.serviceLines != null && request.serviceLines.size()>0){ 
-										servicelineslist.addAll(getServiceLines(request.serviceLines,ServiceLineRT,header.id));
-										for(ServiceLine usl: request.serviceLines){
-											if(usl.BOReferenceLine !=null && usl.BOReferenceLine !=''){
-												if(usl.CoveredProducts != null && usl.CoveredProducts.size()>0)
-													slbrefCPListMap.put(usl.BOReferenceLine,usl.CoveredProducts);
-											}
-										}
-									}
-									
-									if(servicelineslist != null && servicelineslist.size()>0)
-									{
-										Database.SaveResult[] chaild_results = CreateOrUpdateServices((List<Sobject>)servicelineslist,'CREATE');
-										for(Integer k=0;k<chaild_results.size();k++ )
-										{
-											Database.SaveResult sr =chaild_results[k];
-											ServiceLineResult childresult = new ServiceLineResult();
-											if(!sr.isSuccess())
-											{
-												hasError = true;
-													String Message ='';
-													for(Database.Error err : sr.getErrors()) {
-														Message= ' '+err.getFields()+' Error : '+err.getMessage();                              
-													}
-																							
-													childresult.success = false;
-													childresult.type = 'CREATE';
-													childresult.errorMessage = Message;
-													childresult.BOReferenceLine= servicelineslist[k].BackOfficeReference__c; 
-													//errSLResult.ServiceContractbFOId =servicelineslist[k].ParentContract__c;
-													childresult.BOReferenceHeader = header.BackOfficeReference__c;
-													childresult.BOSystem = header.BackOfficeSystem__c;
-												
-												   errbref.add(servicelineslist[k].BackOfficeReference__c);
-											}
-											else{
-													
-													childresult.success = true;
-													childresult.type = 'CREATE';    
-													childresult.bFOContractLineID= sr.getId() ; 
-													slidset.add(sr.getId());                                
-													childresult.BOReferenceLine= servicelineslist[k].BackOfficeReference__c; 
-													//errSLResult.ServiceContractbFOId =servicelineslist[k].ParentContract__c;
-													childresult.BOReferenceHeader = header.BackOfficeReference__c;
-													childresult.BOSystem = header.BackOfficeSystem__c;
-													slrefslidMap.put(servicelineslist[k].BackOfficeReference__c,sr.getId() );
-													slidslrefMap.put(sr.getId(),servicelineslist[k].BackOfficeReference__c);
-												
-											}
-											
-											servicelineResuts.add(childresult);
-											
-										}
-										List<SVMXC__Service_Contract_Products__c>  scpList = new List<SVMXC__Service_Contract_Products__c>();
-										slidcpResultsMap = new Map<id,List<CoveredProductResult>>();
-										
-										for(String st: slbrefCPListMap.keyset()){
-											if(!errbref.contains(st))
-											{
-												
-												for(CoveredProduct ucp :slbrefCPListMap.get(st)){
-													if(ucp.InstalledProductGoldenID != null && ucp.InstalledProductGoldenID != '')
-													ipGoldenIdset.add(ucp.InstalledProductGoldenID);
-													if(ucp.InstalledProductbFOID != null )
-													ipIdSet.add(ucp.InstalledProductbFOID);
-												}
-												
-											}
-										}
-										if(ipGoldenIdset != null && ipGoldenIdset.size()>0)
-										{   
-											getIPBaseOnGodenId(ipGoldenIdset);
-										}
-										if(ipIdSet != null && ipIdSet.size()>0){                            
-											getIPBaseOnId(ipIdSet);                     
-										}
-										for(String st: slbrefCPListMap.keyset()){
-											if(!errbref.contains(st))
-											{
-												List<CoveredProduct> ucplist = slbrefCPListMap.get(st);
-												List<CoveredProduct> tempcp = new List<CoveredProduct>();
-												for(CoveredProduct cpu: ucplist){
-													if(cpu.InstalledProductbFOID != null)
-													{
-														System.debug('\n !!!!!!');
-														tempcp.add(cpu);
-													}
-													else if(cpu.InstalledProductGoldenID != null && cpu.InstalledProductGoldenID!='' /*&& ipObjGoldenIdMap.containskey(cpu.InstalledProductGoldenID)*/){
-														System.debug('\n !!!!!!');
-														tempcp.add(cpu);                                        
+                    
+                        if( !checkExistingServiceContract(request)){
+                        
+                                Savepoint sp = Database.setSavepoint();
+                                if(request.soldToAccount != null)
+                                AccountIDSet.add(request.soldToAccount);
+                                if(request.billToAccount != null)
+                                AccountIDSet.add(request.billToAccount);
+                                if(request.installedAtAccount != null)
+                                AccountIDSet.add(request.installedAtAccount);
+                                SVMXC__Service_Contract__c header = new SVMXC__Service_Contract__c();
+                                if(request.ownerSESA != null && request.ownerSESA !=''){
+                                    sesaset.add(request.ownerSESA);
+                                }
+                                if(request.salesRepSESA != null && request.salesRepSESA !=''){
+                                    sesaset.add(request.salesRepSESA);
+                                }
+                                if(sesaset != null && sesaset.size()>0)
+                                {
+                                    for(User u: [select id, SESAExternalID__c from user where SESAExternalID__c in : sesaset ])
+                                    {
+                                        userSESAMap.put(u.SESAExternalID__c , u);
+                                        userIdMap.put(u.id , u);
+                                    }
+                                }
+                                
+                                
+                                if(request.soldToContact != null){getContactFields(request.soldToContact);}
+                                if(request.billToContact != null){getContactFields(request.billToContact);}
+                                if(request.mainInstalledAtContact != null){getContactFields(request.mainInstalledAtContact);}
+                                
+                                if(GoldenIDset.Size()>0 || firstNameset.size()>0 || localFirstNameset.size()>0 || 
+                                   middleInitialset.size()>0  || lastNameset.size()>0 ||
+                                   localLastNameset.size()>0 || emailAddressset.size()>0 || mobilePhoneset.size()>0 || workPhoneset.size()>0 )
+                                {
+                                         String Querystr = getContactQuery();                        
+                                         conList = Database.query(Querystr);
+                                         System.debug('\n SCLog : '+conList.size());                         
+                                         System.debug('\n SCLog : '+conList);
+                                }
+                                
+                                
+                                SVMXC__Service_Contract__c sctoCreate =ContactInfo(request, getServiceContractHeader(request,ServiceContractRT) ,conList );
+                                
+                                //if(request.RenewedFrom != null )
+                                //SVMXC__Service_Contract__c rf = [Select id, ,SVMXC__Renewal_Number__c where id = :request.RenewedFrom];
+                                
+                                
+                                  
+                                System.debug('\n SCLog : '+sctoCreate);
+                                
+                                Database.SaveResult header_result = CreateOrUpdateServices((List<Sobject>)new List<SVMXC__Service_Contract__c>{sctoCreate},'CREATE')[0];
+                                String HErroMessage ='';
+                                Boolean HeaderSuccess = false;
+                                if (!header_result.isSuccess()) {                   
+                                    hasError = true;
+                                    for(Database.Error err : header_result.getErrors()) {
+                                        HErroMessage= ' '+err.getFields()+' : '+err.getMessage();                              
+                                    }
+                                    response.success = false;
+                                    response.errorMessage = 'Error on Creation of Service Contract : ' + HErroMessage;     
+                                    response.BOReferenceHeader =sctoCreate.BackOfficeReference__c; 
+                                    response.BOSystem = sctoCreate.BackOfficeSystem__c;                        
+                                    response.type ='CREATE';
+                                    System.debug('\n CLog : Error '+HErroMessage);              
+                                    
+                                }
+                                else{
+                                    
+                                    header =[select id, name,SVMXC__Service_Contract_Notes__c,SoldtoAccount__c,DefaultInstalledAtAccount__c,BillToAccount__c,
+                                                                    SVMXC__Start_Date__c,SVMXC__End_Date__c,SVMXC__Contract_Price2__c,CurrencyIsoCode,IsEvergreen__c,
+                                                                    LeadingBusinessBU__c,SendCustomerRenewalNotification__c,OwnerId,SVMXC__Sales_Rep__c,Status__c,PODate__c,
+                                                                    PONumber__c,InitialOpportunity__c,SVMXC__Contact__c,SVMXC__Renewed_From__c,SVMXC__Renewal_Notes__c,
+                                                                    CountryofBackOffice__c,BackOfficeSystem__c,BackOfficeReference__c,RecordTypeId from SVMXC__Service_Contract__c where id = : header_result.getId() ];
+                                    response.bFOContractID = header.id;                     
+                                    response.success = true; 
+                                    response.BOReferenceHeader = header.BackOfficeReference__c; 
+                                    response.BOSystem = header.BackOfficeSystem__c; 
+                                    response.type ='CREATE';
+                                    response.ServiceLineResults = new   List<ServiceLineResult>(); 
+                                    HeaderSuccess = true;
+                                }
+                                
+                                if(HeaderSuccess){                  
+                                    // Processing Service Lines
+                                    List<SVMXC__Service_Contract__c> servicelineslist =new List<SVMXC__Service_Contract__c>();
+                                    List<ServiceLineResult> servicelineResuts = new List<ServiceLineResult>();
+                                    Map<string, List<CoveredProduct>> slbrefCPListMap = new Map<string,List<CoveredProduct>>();
+                                    set<String> errbref = new set<String>();
+                                    Set<id> slidset = new Set<id>();
+                                    Map<String , id> slrefslidMap = new map<String, id>();
+                                    
+                                    Set<String> ipGoldenIdset = new Set<String>(); 
+                                    Set<String> productExtIdset = new Set<String>();
+                                    Set<id> ipIdSet = new Set<id>();
+                                    
+                                    /*
+                                    if(request.serviceLines != null && request.serviceLines.size()>0){ 
+                                        
+                                        for(ServiceLine usl: request.serviceLines){
+                                            if(usl.SKUComRef != null && usl.SKUComRef !='')
+                                             productExtIdset.add(usl.SKUComRef);
+                                        }
+                                    }
+                                    
+                                    if(productExtIdset != null && productExtIdset.size()>0){
+                                        
+                                        for(Product2 prod : [select id, ExtProductId__c from Product2 where ExtProductId__c in : productExtIdset])
+                                        {
+                                            productMap.put(prod.ExtProductId__c,prod);
+                                        }
+                                    }
+                                    
+                                    System.debug('\n SC Log: '+productMap);
+                                    */
+                                    if(request.serviceLines != null && request.serviceLines.size()>0){ 
+                                        servicelineslist.addAll(getServiceLines(request.serviceLines,ServiceLineRT,header.id));
+                                        for(ServiceLine usl: request.serviceLines){
+                                            if(usl.BOReferenceLine !=null && usl.BOReferenceLine !=''){
+                                                if(usl.CoveredProducts != null && usl.CoveredProducts.size()>0)
+                                                    slbrefCPListMap.put(usl.BOReferenceLine,usl.CoveredProducts);
+                                            }
+                                        }
+                                    }
+                                    
+                                    if(servicelineslist != null && servicelineslist.size()>0)
+                                    {
+                                        Database.SaveResult[] chaild_results = CreateOrUpdateServices((List<Sobject>)servicelineslist,'CREATE');
+                                        for(Integer k=0;k<chaild_results.size();k++ )
+                                        {
+                                            Database.SaveResult sr =chaild_results[k];
+                                            ServiceLineResult childresult = new ServiceLineResult();
+                                            if(!sr.isSuccess())
+                                            {
+                                                hasError = true;
+                                                    String Message ='';
+                                                    for(Database.Error err : sr.getErrors()) {
+                                                        Message= ' '+err.getFields()+' Error : '+err.getMessage();                              
+                                                    }
+                                                                                            
+                                                    childresult.success = false;
+                                                    childresult.type = 'CREATE';
+                                                    childresult.errorMessage = Message;
+                                                    childresult.BOReferenceLine= servicelineslist[k].BackOfficeReference__c; 
+                                                    //errSLResult.ServiceContractbFOId =servicelineslist[k].ParentContract__c;
+                                                    childresult.BOReferenceHeader = header.BackOfficeReference__c;
+                                                    childresult.BOSystem = header.BackOfficeSystem__c;
+                                                
+                                                   errbref.add(servicelineslist[k].BackOfficeReference__c);
+                                            }
+                                            else{
+                                                    
+                                                    childresult.success = true;
+                                                    childresult.type = 'CREATE';    
+                                                    childresult.bFOContractLineID= sr.getId() ; 
+                                                    slidset.add(sr.getId());                                
+                                                    childresult.BOReferenceLine= servicelineslist[k].BackOfficeReference__c; 
+                                                    //errSLResult.ServiceContractbFOId =servicelineslist[k].ParentContract__c;
+                                                    childresult.BOReferenceHeader = header.BackOfficeReference__c;
+                                                    childresult.BOSystem = header.BackOfficeSystem__c;
+                                                    slrefslidMap.put(servicelineslist[k].BackOfficeReference__c,sr.getId() );
+                                                    slidslrefMap.put(sr.getId(),servicelineslist[k].BackOfficeReference__c);
+                                                
+                                            }
+                                            
+                                            servicelineResuts.add(childresult);
+                                            
+                                        }
+                                        List<SVMXC__Service_Contract_Products__c>  scpList = new List<SVMXC__Service_Contract_Products__c>();
+                                        slidcpResultsMap = new Map<id,List<CoveredProductResult>>();
+                                        
+                                        for(String st: slbrefCPListMap.keyset()){
+                                            if(!errbref.contains(st))
+                                            {
+                                                
+                                                for(CoveredProduct ucp :slbrefCPListMap.get(st)){
+                                                    if(ucp.InstalledProductGoldenID != null && ucp.InstalledProductGoldenID != '')
+                                                    ipGoldenIdset.add(ucp.InstalledProductGoldenID);
+                                                    if(ucp.InstalledProductbFOID != null )
+                                                    ipIdSet.add(ucp.InstalledProductbFOID);
+                                                }
+                                                
+                                            }
+                                        }
+                                        if(ipGoldenIdset != null && ipGoldenIdset.size()>0)
+                                        {   
+                                            getIPBaseOnGodenId(ipGoldenIdset);
+                                        }
+                                        if(ipIdSet != null && ipIdSet.size()>0){                            
+                                            getIPBaseOnId(ipIdSet);                     
+                                        }
+                                        for(String st: slbrefCPListMap.keyset()){
+                                            if(!errbref.contains(st))
+                                            {
+                                                List<CoveredProduct> ucplist = slbrefCPListMap.get(st);
+                                                List<CoveredProduct> tempcp = new List<CoveredProduct>();
+                                                for(CoveredProduct cpu: ucplist){
+                                                    if(cpu.InstalledProductbFOID != null)
+                                                    {
+                                                        System.debug('\n !!!!!!');
+                                                        tempcp.add(cpu);
+                                                    }
+                                                    else if(cpu.InstalledProductGoldenID != null && cpu.InstalledProductGoldenID!='' /*&& ipObjGoldenIdMap.containskey(cpu.InstalledProductGoldenID)*/){
+                                                        System.debug('\n !!!!!!');
+                                                        tempcp.add(cpu);                                        
                                                     }else if (cpu.productbFOID != null){ // Yassine B 18/05/2015 (wide condition about shippedSerialNumber and productbFOID)- START
                                                         System.debug('\n !!!!!!');
-														tempcp.add(cpu);   
+                                                        tempcp.add(cpu);   
                                                     }
-													else if(cpu.shippedSerialNumber != null && cpu.shippedSerialNumber !=''){
-														System.debug('\n !!!!!!');
-														tempcp.add(cpu);    
-													}// Yassine B 18/05/2015 (wide condition about shippedSerialNumber and productbFOID)- END
-													else{
-														System.debug('\n !!!!!!');
-														CoveredProductResult errcpr = new CoveredProductResult();
-														errcpr.success = false;
-														errcpr.type ='CREATE';
-														errcpr.errorMessage = 'pre-requiste is not fullfilled ';
-														errcpr.BOReferenceLine =st;
-														hasError = true;
-														if(slidcpResultsMap.containskey(slrefslidMap.get(st)))
-														{
-															slidcpResultsMap.get(slrefslidMap.get(st)).add(errcpr);
-															
-														}
-														else{
-															slidcpResultsMap.put(slrefslidMap.get(st), new List<CoveredProductResult>{errcpr});
-														}
-														
-													}
-												
-												}
-												System.debug('\n CLog:  '+tempcp.size());
-												if(tempcp != null && tempcp.size()>0)
-												scpList.AddAll(getServiceContractProduct(tempcp, slrefslidMap.get(st)));                                       
-												
-											}
-										}
-										if(scpList != null && scpList.size()>0){                                
-										   Boolean iserr = createCoveredProduct(scpList,'CREATE'); 
-											if(iserr)
-											hasError = true;
-										}
-										for(ServiceLineResult slr:servicelineResuts){
-											
-											if(slr.bFOContractLineID != null && slidcpResultsMap.containskey(slr.bFOContractLineID))
-											{
-												slr.CoveredProductResults =  slidcpResultsMap.get(slr.bFOContractLineID);
-											}                                
-										}
-										if(servicelineResuts != null && servicelineResuts.size()>0)
-										{
-											response.ServiceLineResults = servicelineResuts;
-										}
-									}
-									
-								}
+                                                    else if(cpu.shippedSerialNumber != null && cpu.shippedSerialNumber !=''){
+                                                        System.debug('\n !!!!!!');
+                                                        tempcp.add(cpu);    
+                                                    }// Yassine B 18/05/2015 (wide condition about shippedSerialNumber and productbFOID)- END
+                                                    else{
+                                                        System.debug('\n !!!!!!');
+                                                        CoveredProductResult errcpr = new CoveredProductResult();
+                                                        errcpr.success = false;
+                                                        errcpr.type ='CREATE';
+                                                        errcpr.errorMessage = 'pre-requiste is not fullfilled ';
+                                                        errcpr.BOReferenceLine =st;
+                                                        hasError = true;
+                                                        if(slidcpResultsMap.containskey(slrefslidMap.get(st)))
+                                                        {
+                                                            slidcpResultsMap.get(slrefslidMap.get(st)).add(errcpr);
+                                                            
+                                                        }
+                                                        else{
+                                                            slidcpResultsMap.put(slrefslidMap.get(st), new List<CoveredProductResult>{errcpr});
+                                                        }
+                                                        
+                                                    }
+                                                
+                                                }
+                                                System.debug('\n CLog:  '+tempcp.size());
+                                                if(tempcp != null && tempcp.size()>0)
+                                                scpList.AddAll(getServiceContractProduct(tempcp, slrefslidMap.get(st)));                                       
+                                                
+                                            }
+                                        }
+                                        if(scpList != null && scpList.size()>0){                                
+                                           Boolean iserr = createCoveredProduct(scpList,'CREATE'); 
+                                            if(iserr)
+                                            hasError = true;
+                                        }
+                                        for(ServiceLineResult slr:servicelineResuts){
+                                            
+                                            if(slr.bFOContractLineID != null && slidcpResultsMap.containskey(slr.bFOContractLineID))
+                                            {
+                                                slr.CoveredProductResults =  slidcpResultsMap.get(slr.bFOContractLineID);
+                                            }                                
+                                        }
+                                        if(servicelineResuts != null && servicelineResuts.size()>0)
+                                        {
+                                            response.ServiceLineResults = servicelineResuts;
+                                        }
+                                    }
+                                    
+                                }
 
-									if(hasError)
-									{
-										Database.rollback(sp);
-										RollBackProcess('CREATE');
-									}
-									else{
-										System.debug('\n CLog: ipneed to match '+ipneedtomach);
-										if(ipneedtomach!= null && ipneedtomach.size()>0)
-										{
-											List<SVMXC__Service_Contract_Products__c> cplist = new List<SVMXC__Service_Contract_Products__c>();
-											for(SVMXC__Service_Contract_Products__c cpObj: [select id,SVMXC__Installed_Product__c , ShippedSerialNumber__c ,SVMXC__Product__c  from SVMXC__Service_Contract_Products__c where id in : ipneedtomach])
-											{
-												if(cpObj.SVMXC__Installed_Product__c == null && cpObj.ShippedSerialNumber__c != null && cpObj.SVMXC__Product__c!= null)
-												{
-													cplist.add(cpObj);
-												}
-											
-											}
-											
-											if(cplist!= null && cplist.size()>0){
-												System.debug('\n CLog: cp list '+cplist);
-												// For defect QC 11653
-												// Start
-												try{
-													AP_IPAssociationHandler.attachIPForConcurrentOrders(cplist);
-												}
-												catch(exception ex){
-													
-													Database.rollback(sp);
-													RollBackProcess('CREATE');
-													response.errorMessage +=ex.getMessage();
-												}
-												// End
-												System.debug('\n CLog: cp list ');
-											}
-										
-										}                       
-									}
-							
-						}
-						else{
-							response.success = false;
-							response.type = 'CREATE';
-							response.errorMessage = 'Service Contract already existing for '+request.BOSystem +' and Back office ref='+request.BOReferenceHeader;
-									
-						}
+                                    if(hasError)
+                                    {
+                                        Database.rollback(sp);
+                                        RollBackProcess('CREATE');
+                                    }
+                                    else{
+                                        System.debug('\n CLog: ipneed to match '+ipneedtomach);
+                                        if(ipneedtomach!= null && ipneedtomach.size()>0)
+                                        {
+                                            List<SVMXC__Service_Contract_Products__c> cplist = new List<SVMXC__Service_Contract_Products__c>();
+                                            for(SVMXC__Service_Contract_Products__c cpObj: [select id,SVMXC__Installed_Product__c , ShippedSerialNumber__c ,SVMXC__Product__c  from SVMXC__Service_Contract_Products__c where id in : ipneedtomach])
+                                            {
+                                                if(cpObj.SVMXC__Installed_Product__c == null && cpObj.ShippedSerialNumber__c != null && cpObj.SVMXC__Product__c!= null)
+                                                {
+                                                    cplist.add(cpObj);
+                                                }
+                                            
+                                            }
+                                            
+                                            if(cplist!= null && cplist.size()>0){
+                                                System.debug('\n CLog: cp list '+cplist);
+                                                // For defect QC 11653
+                                                // Start
+                                                try{
+                                                    AP_IPAssociationHandler.attachIPForConcurrentOrders(cplist);
+                                                }
+                                                catch(exception ex){
+                                                    
+                                                    Database.rollback(sp);
+                                                    RollBackProcess('CREATE');
+                                                    response.errorMessage +=ex.getMessage();
+                                                }
+                                                // End
+                                                System.debug('\n CLog: cp list ');
+                                            }
+                                        
+                                        }                       
+                                    }
+                            
+                        }
+                        else{
+                            response.success = false;
+                            response.type = 'CREATE';
+                            response.errorMessage = 'Service Contract already existing for '+request.BOSystem +' and Back office ref='+request.BOReferenceHeader;
+                                    
+                        }
                     
                 }                  
                 
@@ -566,15 +566,15 @@ global class WS_Service_Contract{
     
         return response;
     }
-	
-	public static  Boolean checkExistingServiceContract(ServiceContract request){
-		
-					List<SVMXC__Service_Contract__c> esclist =[select id,BackOfficeSystem__c,BackOfficeReference__c  from SVMXC__Service_Contract__c where BackOfficeReference__c =:request.BOReferenceHeader and BackOfficeSystem__c=:request.BOSystem  and RecordTypeId =:ServiceContractRT];
-					if(esclist != null && esclist.size()>0)
-						return true;
-					else{return false;}
-	
-	}
+    
+    public static  Boolean checkExistingServiceContract(ServiceContract request){
+        
+                    List<SVMXC__Service_Contract__c> esclist =[select id,BackOfficeSystem__c,BackOfficeReference__c  from SVMXC__Service_Contract__c where BackOfficeReference__c =:request.BOReferenceHeader and BackOfficeSystem__c=:request.BOSystem  and RecordTypeId =:ServiceContractRT];
+                    if(esclist != null && esclist.size()>0)
+                        return true;
+                    else{return false;}
+    
+    }
     
     public static Boolean  createCoveredProduct(List<SVMXC__Service_Contract_Products__c> scpList, String event){
     
@@ -678,10 +678,10 @@ global class WS_Service_Contract{
     
     
             response.success = false;
-			if(type == 'CREATE')
+            if(type == 'CREATE')
             response.bFOContractID = null;
-			//if(response.errorMessage == '')
-			//response.errorMessage = 'Validation error occurred during ' + type  + ' call to bFS, please update data and try again.';
+            //if(response.errorMessage == '')
+            //response.errorMessage = 'Validation error occurred during ' + type  + ' call to bFS, please update data and try again.';
             if(response.ServiceLineResults != null ){
                 for(ServiceLineResult slr: response.ServiceLineResults){
                 
@@ -700,8 +700,8 @@ global class WS_Service_Contract{
     
     
     }
-	
-	public class MandatoryFields{
+    
+    public class MandatoryFields{
         public Boolean isMFPass{get;set;}
         public String fields{get;set;}
         
@@ -740,7 +740,7 @@ global class WS_Service_Contract{
             mandatoryHeaderFields +='contractPrice ';
             isCheckPass = false;
         }
-		/*
+        /*
         if(request.sendCustomerRenewalNotification == null ){
             mandatoryHeaderFields +='sendCustomerRenewalNotification ';
             isCheckPass = false;
@@ -864,7 +864,7 @@ global class WS_Service_Contract{
     }
     webservice static  ServiceContractResult bulkUpdateServiceContracts(ServiceContract request){
          response = new ServiceContractResult();
-		 response.errorMessage ='';
+         response.errorMessage ='';
          response.ServiceLineResults =new List<ServiceLineResult>();
          Savepoint sp = Database.setSavepoint();
           Boolean hasError = false;
@@ -920,7 +920,7 @@ global class WS_Service_Contract{
                     }
                     System.debug('*************'+sctoupdated);
                     Database.SaveResult header_result = CreateOrUpdateServices((List<Sobject>)new List<SVMXC__Service_Contract__c>{sctoupdated},'UPDATE')[0];
-					System.debug('*************'+[select id, name,SVMXC__Service_Contract_Notes__c,SoldtoAccount__c,DefaultInstalledAtAccount__c,BillToAccount__c,
+                    System.debug('*************'+[select id, name,SVMXC__Service_Contract_Notes__c,SoldtoAccount__c,DefaultInstalledAtAccount__c,BillToAccount__c,
                                                         SVMXC__Start_Date__c,SVMXC__End_Date__c,SVMXC__Contract_Price2__c,CurrencyIsoCode,IsEvergreen__c,
                                                         LeadingBusinessBU__c,SendCustomerRenewalNotification__c,OwnerId,SVMXC__Sales_Rep__c,Status__c,PODate__c,
                                                         PONumber__c,InitialOpportunity__c,SVMXC__Contact__c,SVMXC__Renewed_From__c,SVMXC__Renewal_Notes__c,
@@ -1002,7 +1002,7 @@ global class WS_Service_Contract{
                             // Service Lines Update Process Starts
                             if(usltoupdate!= null && usltoupdate.size()>0)
                             {
-								System.debug('\n Clog: Service lines update process Started');
+                                System.debug('\n Clog: Service lines update process Started');
                                 System.debug('\n Clog:'+usltoupdate.size());
                                 List<SVMXC__Service_Contract__c> exslList =[select id, name,SVMXC__Service_Contract_Notes__c,SoldtoAccount__c,DefaultInstalledAtAccount__c,BillToAccount__c,
                                                             SVMXC__Start_Date__c,SVMXC__End_Date__c,SVMXC__Contract_Price2__c,CurrencyIsoCode,IsEvergreen__c,
@@ -1065,7 +1065,7 @@ global class WS_Service_Contract{
                                 {
                                     response.ServiceLineResults.addAll(slresuts) ;                              
                                 }*/
-								 //Contract Products Process Starts
+                                 //Contract Products Process Starts
                                 Set<id> ipobjidset = new Set<id>();
                                 Set<String> ipobjgidset = new Set<String>();
                                 List<SVMXC__Service_Contract_Products__c> existingCpList = [select id,SVMXC__Start_Date__c, SVMXC__End_Date__c ,BackOfficeReference__c, SVMXC__Installed_Product__c,SVMXC__Installed_Product__r.GoldenAssetId__c,SVMXC__Service_Contract__c,SVMXC__Product__c,ShippedSerialNumber__c from SVMXC__Service_Contract_Products__c where SVMXC__Service_Contract__c in : updateslidset ];
@@ -1147,15 +1147,15 @@ global class WS_Service_Contract{
                                         else if(cpunit.InstalledProductbFOID != null && ipidCpMap.containskey(cpunit.InstalledProductbFOID)){
                                             cpObject = ipidCpMap.get(cpunit.InstalledProductbFOID);     
                                         }
-										else if(cpunit.BOReferenceCoveredProduct != null && boffrefCpMap.containskey(cpunit.BOReferenceCoveredProduct)){
+                                        else if(cpunit.BOReferenceCoveredProduct != null && boffrefCpMap.containskey(cpunit.BOReferenceCoveredProduct)){
                                             cpObject = boffrefCpMap.get(cpunit.BOReferenceCoveredProduct);     
-                                        }										
+                                        }                                       
                                         if(cpObject!= null)
                                         {                                       
                                             cpObject.SVMXC__Start_Date__c = cpunit.InstalledProductStartDate;
                                             cpObject.SVMXC__End_Date__c = cpunit.InstalledProductEndDate;    
-											cpObject.ShippedSerialNumber__c = cpunit.shippedSerialNumber;
-                                            cpObject.SVMXC__Product__c = cpunit.productbFOID;   											
+                                            cpObject.ShippedSerialNumber__c = cpunit.shippedSerialNumber;
+                                            cpObject.SVMXC__Product__c = cpunit.productbFOID;                                               
                                             toupdate.add(cpObject);
                                         }
                                         else{
@@ -1320,12 +1320,12 @@ global class WS_Service_Contract{
                                                         tempcp.add(cpu);                                        
                                                     }else if (cpu.productbFOID != null){ // Yassine B 18/05/2015 (wide condition about shippedSerialNumber and productbFOID)- START
                                                         System.debug('\n !!!!!!');
-														tempcp.add(cpu);   
+                                                        tempcp.add(cpu);   
                                                     }
-													else if(cpu.shippedSerialNumber != null && cpu.shippedSerialNumber !=''){
-														System.debug('\n !!!!!!');
-														tempcp.add(cpu);    
-													}// Yassine B 18/05/2015 (wide condition about shippedSerialNumber and productbFOID)- END
+                                                    else if(cpu.shippedSerialNumber != null && cpu.shippedSerialNumber !=''){
+                                                        System.debug('\n !!!!!!');
+                                                        tempcp.add(cpu);    
+                                                    }// Yassine B 18/05/2015 (wide condition about shippedSerialNumber and productbFOID)- END
                                                     else{
                                                     
                                                         CoveredProductResult errcpr = new CoveredProductResult();
@@ -1703,7 +1703,7 @@ global class WS_Service_Contract{
                     sc.IsEvergreen__c  = usc.isEvergreen;
                     sc.LeadingBusinessBU__c = usc.leadingBU;
                     //sc.name = usc.leadingBUContract;
-					if(usc.sendCustomerRenewalNotification != null)
+                    if(usc.sendCustomerRenewalNotification != null)
                     sc.SendCustomerRenewalNotification__c  = usc.sendCustomerRenewalNotification;
                     if(userSESAMap.containskey(usc.ownerSESA))
                     sc.OwnerId = userSESAMap.get(usc.ownerSESA).id;
@@ -1837,8 +1837,8 @@ global class WS_Service_Contract{
                     sc.name = uslObj.contractNumberLine;
                     sc.RecordTypeId = rt;
                     sc.BackOfficeReference__c = uslObj.BOReferenceLine;
-                    //sc.DefaultInstalledAtAccount__c = uslObj.mainShipToAccount;					
-					sc.SVMXC__Company__c = uslObj.mainShipToAccount;
+                    //sc.DefaultInstalledAtAccount__c = uslObj.mainShipToAccount;                   
+                    sc.SVMXC__Company__c = uslObj.mainShipToAccount;
                     sc.Entitlement__c = uslobj.entitlement; 
                     sc.Quantity__c = uslobj.quantity; 
                     sc.SVMXC__Contract_Price2__c = uslobj.contractPrice; 
@@ -1849,7 +1849,6 @@ global class WS_Service_Contract{
                     sc.TECH_UnitPrice__c =uslobj.TECH_UnitPrice;
                     sc.TECH_BOLastUpdateTimeStamp__c = uslobj.TECH_BOLastUpdateTimeStamp;
                     sc.ReasonForCancellation__c = uslobj.ReasonForCancellation;
-                    
                 }
                 else{
                     
@@ -1861,7 +1860,7 @@ global class WS_Service_Contract{
                     if(uslObj.BOReferenceLine !='N/A')
                     sc.BackOfficeReference__c = uslObj.BOReferenceLine;
                     if(uslObj.mainShipToAccount != null)
-					sc.SVMXC__Company__c = uslObj.mainShipToAccount;
+                    sc.SVMXC__Company__c = uslObj.mainShipToAccount;
                     //sc.DefaultInstalledAtAccount__c = uslObj.mainShipToAccount;
                     if(uslObj.entitlement !='N/A')
                     sc.Entitlement__c = uslobj.entitlement; 
@@ -2085,14 +2084,14 @@ global class WS_Service_Contract{
                     else
                     WhereClause +=  ' WorkPhone__c in ('+ SOQLListFormat(workPhoneset) +') ';
                 }
-				if(AccountIDSet != null && AccountIDSet.size()>0)
-				{
-					if(WhereClause.length()>0)
+                if(AccountIDSet != null && AccountIDSet.size()>0)
+                {
+                    if(WhereClause.length()>0)
                     WhereClause +=  ' OR AccountId in ('+ SOQLListFormat(AccountIDSet) +') ';
                     else
                     WhereClause +=  ' AccountId in ('+ SOQLListFormat(AccountIDSet) +') ';
-					
-				}
+                    
+                }
                 Query =  QueryString +' where '+WhereClause+' Limit 50000';
                 System.debug('\n scLog :'+Query);
                 return Query;
