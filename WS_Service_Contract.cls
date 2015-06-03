@@ -1174,6 +1174,20 @@ global class WS_Service_Contract{
                                 }
                                 if(toupdate!= null && toupdate.size()>0){                               
                                     hasError = createCoveredProduct(toupdate,'UPDATE');
+									// For defect DEF-6992
+									// Start
+									if(!hasError){
+										try{
+											AP_IPAssociationHandler.attachIPForConcurrentOrders(toupdate);
+										}
+										catch(exception ex){										
+											
+											response.errorMessage +=ex.getMessage();
+											hasError = true;
+										}
+									}
+									// End
+									
                                 }
                                 System.debug('\n Clog: Ip id'+slidCpunitocreatemap);
                                 if(slidCpunitocreatemap != null && slidCpunitocreatemap.size()>0){
@@ -1186,6 +1200,21 @@ global class WS_Service_Contract{
                                         Boolean isError  = createCoveredProduct(tocreatcpList,'CREATE');
                                         if(isError)
                                         hasError = true;
+										// For defect DEF-6992
+										// Start
+										if(!hasError){
+											try{
+												AP_IPAssociationHandler.attachIPForConcurrentOrders(tocreatcpList);
+											}
+											catch(exception ex){										
+												
+												response.errorMessage +=ex.getMessage();
+												hasError = true;
+											}
+										}
+										// End
+										
+										
                                     }
                                     
                                 }
@@ -1359,6 +1388,20 @@ global class WS_Service_Contract{
                                         Boolean isError  = createCoveredProduct(tocreatcpList,'CREATE');
                                         if(isError)
                                         hasError = true;
+										// For defect DEF-6992
+										// Start
+										if(!hasError){
+											try{
+												AP_IPAssociationHandler.attachIPForConcurrentOrders(tocreatcpList);
+											}
+											catch(exception ex){										
+												
+												response.errorMessage +=ex.getMessage();
+												hasError = true;
+											}
+										}
+										// End
+										
                                     }
                                     
                                     System.debug('\n Log : desc :  covered prod Result Map '+slidcpResultsMap);
