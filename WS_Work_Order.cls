@@ -3395,6 +3395,7 @@ global class WS_Work_Order{
         Map<id, PartsOrderLinesResult> plineResultMap = new Map<id, PartsOrderLinesResult>();
         Map<id,List<PartsOrderLinesResult>> pidPlineResults = new Map<id,List<PartsOrderLinesResult>>();
         Map<id,PartsOrderResult> pidporderResultmap = new Map<id,PartsOrderResult>();
+		Set<String> calculatedPlantSet = new Set<String>();
         
         
         for(PartsOrder punit: request.PartsOrders){
@@ -3405,11 +3406,15 @@ global class WS_Work_Order{
                 }
                 if(punit.PartsOrderLines != null ){
                     for(PartsOrderLines plUnit:punit.PartsOrderLines){                  
-                        if(plUnit.partOrderLinebFOID != null){
-                            
+                        if(plUnit.partOrderLinebFOID != null){                            
                             porderLineMap.put(plUnit.partOrderLinebFOID, plUnit);
                             polpomap.put(plUnit.partOrderLinebFOID,punit.partOrderbFOID);
-                        }                   
+							
+                        }
+						if(plUnit.calculatedPlant != null && plUnit.calculatedPlant !=''){
+								calculatedPlantSet.add(plUnit.calculatedPlant);
+						}
+						
                     }
                 }
         }
@@ -3490,6 +3495,15 @@ global class WS_Work_Order{
         if(porderLineMap != null && porderLineMap.size()>0){
         
             List<SVMXC__RMA_Shipment_Line__c> porderLineList =[select id,SVMXC__RMA_Shipment_Order__c, name,SVMXC__Expected_Quantity2__c ,Shipped_Qty__c ,ShippingStatus__c ,Calculated_plant__c ,SVMXC__Expected_Ship_Date__c ,BackOfficeReference__c ,Carrier__c ,Tracking_number__c, TECH_BOPartsOrderLineRecordId__c,TECH_BOLastUpdateTimestamp__c, BOMaterialReference__c  from SVMXC__RMA_Shipment_Line__c where id in :porderLineMap.keySet() ]; //Yassine.B 09/04/2015
+			Map<String,Plant__c> plantMap = new Map<String,Plant__c>();
+			
+			if(calculatedPlantSet != null && calculatedPlantSet.size()>0){
+				for(Plant__c obj:  [select id,Name from Plant__c where name in :calculatedPlantSet ])
+				{
+					plantMap.put(obj.name,obj);
+				}
+			}
+			
             if(porderLineList != null && porderLineList.size()>0){
                 for(SVMXC__RMA_Shipment_Line__c polObj:porderLineList){
                 
@@ -3517,9 +3531,9 @@ global class WS_Work_Order{
                                 polObj.ShippingStatus__c = opluint.shippingStatus; //Yassine.B 09/04/2015
                             }
                         }
-                        if(opluint.calculatedPlant != null)
+                        if(opluint.calculatedPlant != null &&  opluint.calculatedPlant !='' && plantMap.containskey(opluint.calculatedPlant))
                         {
-                            polObj.Calculated_plant__c = opluint.calculatedPlant ;
+                            polObj.Calculated_plant__c = plantMap.get(opluint.calculatedPlant).id ;
                         }
                         if(opluint.expectedShipDate != null)
                         {
@@ -3555,7 +3569,7 @@ global class WS_Work_Order{
                         }                        
                     }
                 }
-                    Database.SaveResult[] Pol_results  = CreateOrUpdateServices((List<Sobject>)porderLineList,'UPDATE');
+				Database.SaveResult[] Pol_results  = CreateOrUpdateServices((List<Sobject>)porderLineList,'UPDATE');
                 for(Integer k=0;k<Pol_results.size();k++ )
                 {
                     Database.SaveResult sr = Pol_results[k];
@@ -3594,8 +3608,7 @@ global class WS_Work_Order{
                     
                     plineResultMap.put(polr.partOrderLinebFOID, polr);
                     /*
-                    for(PartsOrderResult pr: PartsOrderUnitList){
-                    
+                    for(PartsOrderResult pr: PartsOrderUnitList){                    
                         if(pr.partOrderbFOID == porderLineList[k].SVMXC__RMA_Shipment_Order__c )
                         pr.PartsOrderLinesResults.add(polr);
                     
