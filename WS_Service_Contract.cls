@@ -972,9 +972,6 @@ global class WS_Service_Contract{
                             List<ServiceLine> usltoupdate = new List<ServiceLine>();
                             List<ServiceLine> usltocreate = new List<ServiceLine>();
                             Set<String>     productExtIdset = new Set<String>();
-                            
-                            
-                            
                             for(ServiceLine usl: request.serviceLines )
                             {
                                 if(usl.bFOContractLineID != null )
@@ -1174,20 +1171,20 @@ global class WS_Service_Contract{
                                 }
                                 if(toupdate!= null && toupdate.size()>0){                               
                                     hasError = createCoveredProduct(toupdate,'UPDATE');
-									// For defect DEF-6992
-									// Start
-									if(!hasError){
-										try{
-											AP_IPAssociationHandler.attachIPForConcurrentOrders(toupdate);
-										}
-										catch(exception ex){										
-											
-											response.errorMessage +=ex.getMessage();
-											hasError = true;
-										}
-									}
-									// End
-									
+                                    // For defect DEF-6992
+                                    // Start
+                                    if(!hasError){
+                                        try{
+                                            AP_IPAssociationHandler.attachIPForConcurrentOrders(toupdate);
+                                        }
+                                        catch(exception ex){                                        
+                                            
+                                            response.errorMessage +=ex.getMessage();
+                                            hasError = true;
+                                        }
+                                    }
+                                    // End
+                                    
                                 }
                                 System.debug('\n Clog: Ip id'+slidCpunitocreatemap);
                                 if(slidCpunitocreatemap != null && slidCpunitocreatemap.size()>0){
@@ -1200,21 +1197,21 @@ global class WS_Service_Contract{
                                         Boolean isError  = createCoveredProduct(tocreatcpList,'CREATE');
                                         if(isError)
                                         hasError = true;
-										// For defect DEF-6992
-										// Start
-										if(!hasError){
-											try{
-												AP_IPAssociationHandler.attachIPForConcurrentOrders(tocreatcpList);
-											}
-											catch(exception ex){										
-												
-												response.errorMessage +=ex.getMessage();
-												hasError = true;
-											}
-										}
-										// End
-										
-										
+                                        // For defect DEF-6992
+                                        // Start
+                                        if(!hasError){
+                                            try{
+                                                AP_IPAssociationHandler.attachIPForConcurrentOrders(tocreatcpList);
+                                            }
+                                            catch(exception ex){                                        
+                                                
+                                                response.errorMessage +=ex.getMessage();
+                                                hasError = true;
+                                            }
+                                        }
+                                        // End
+                                        
+                                        
                                     }
                                     
                                 }
@@ -1388,20 +1385,20 @@ global class WS_Service_Contract{
                                         Boolean isError  = createCoveredProduct(tocreatcpList,'CREATE');
                                         if(isError)
                                         hasError = true;
-										// For defect DEF-6992
-										// Start
-										if(!hasError){
-											try{
-												AP_IPAssociationHandler.attachIPForConcurrentOrders(tocreatcpList);
-											}
-											catch(exception ex){										
-												
-												response.errorMessage +=ex.getMessage();
-												hasError = true;
-											}
-										}
-										// End
-										
+                                        // For defect DEF-6992
+                                        // Start
+                                        if(!hasError){
+                                            try{
+                                                AP_IPAssociationHandler.attachIPForConcurrentOrders(tocreatcpList);
+                                            }
+                                            catch(exception ex){                                        
+                                                
+                                                response.errorMessage +=ex.getMessage();
+                                                hasError = true;
+                                            }
+                                        }
+                                        // End
+                                        
                                     }
                                     
                                     System.debug('\n Log : desc :  covered prod Result Map '+slidcpResultsMap);
@@ -1434,6 +1431,13 @@ global class WS_Service_Contract{
                         
                     // processing Service contract Header 
                     List<Sobject> conList = new List<Sobject>();
+					if(request.soldToAccount != null)
+					AccountIDSet.add(request.soldToAccount);
+					if(request.billToAccount != null)
+					AccountIDSet.add(request.billToAccount);
+					if(request.installedAtAccount != null)
+					AccountIDSet.add(request.installedAtAccount);
+					
                     if(request.soldToContact != null){getContactFields(request.soldToContact);}
                     if(request.billToContact != null){getContactFields(request.billToContact);}
                     if(request.mainInstalledAtContact != null){getContactFields(request.mainInstalledAtContact);}
@@ -2058,11 +2062,17 @@ global class WS_Service_Contract{
         
                 String QueryString ='';
                 String WhereClause ='';
-                QueryString = ' Select id,SEContactID__c,FirstName,LocalFirstName__c,MidInit__c,LocalMidInit__c,LastName,LocalLastName__c,Email,MobilePhone,WorkPhone__c from Contact ';
+				String AccountFilter ='';
+                QueryString = ' Select id,SEContactID__c,FirstName,LocalFirstName__c,MidInit__c,LocalMidInit__c,LastName,LocalLastName__c,Email,MobilePhone,WorkPhone__c,AccountId from Contact ';
                 
+				if(AccountIDSet != null && AccountIDSet.size()>0)
+                {                   
+                    AccountFilter +=  ' AccountId in ('+ SOQLListFormat(AccountIDSet) +') ';                    
+                }
+				
                 if(GoldenIDset != null && GoldenIDset.size()>0)
-                {
-                    WhereClause +=  ' SEContactID__c in  ('+ SOQLListFormat(GoldenIDset) +') ';
+                {                    
+					WhereClause +=  ' ( SEContactID__c in  ('+ SOQLListFormat(GoldenIDset) +') ';					
                 }
                 if(firstNameset != null && firstNameset.size()>0)
                 {
@@ -2127,15 +2137,20 @@ global class WS_Service_Contract{
                     else
                     WhereClause +=  ' WorkPhone__c in ('+ SOQLListFormat(workPhoneset) +') ';
                 }
-                if(AccountIDSet != null && AccountIDSet.size()>0)
-                {
-                    if(WhereClause.length()>0)
-                    WhereClause +=  ' OR AccountId in ('+ SOQLListFormat(AccountIDSet) +') ';
-                    else
-                    WhereClause +=  ' AccountId in ('+ SOQLListFormat(AccountIDSet) +') ';
-                    
-                }
-                Query =  QueryString +' where '+WhereClause+' Limit 50000';
+				if(AccountFilter.length()>0)
+				{
+					if(WhereClause.length()>0)
+					{
+						WhereClause  = ' AND ('+ WhereClause + ' )';
+						WhereClause = AccountFilter + WhereClause;
+					}
+					else{
+						WhereClause = AccountFilter;
+					}
+					
+				}
+					
+                Query =  QueryString +' where '+WhereClause+' Limit 10000';
                 System.debug('\n scLog :'+Query);
                 return Query;
         
@@ -2153,9 +2168,10 @@ global class WS_Service_Contract{
             
                 if(request.soldToContact != null)
                 {
-                    if(getMatchedContact(request.soldToContact ,conList) != null )
+					Id ContactId = getMatchedContact(request.soldToContact ,conList , request.soldToAccount);
+                    if(ContactId != null )
                     {
-                        sc.SVMXC__Contact__c = getMatchedContact(request.soldToContact ,conList); 
+                        sc.SVMXC__Contact__c = ContactId; 
                     }
                     else{
                         System.debug('***********************************');
@@ -2177,10 +2193,10 @@ global class WS_Service_Contract{
                 }
                 if(request.billToContact != null)
                 {
-                    
-                    if(getMatchedContact(request.billToContact ,conList) != null )
+                    Id ContactId = getMatchedContact(request.billToContact ,conList , request.billToAccount);
+                    if(ContactId != null )
                     {
-                        sc.BillToContact__c = getMatchedContact(request.billToContact ,conList); 
+                        sc.BillToContact__c = ContactId; 
                     }
                     
                     else{
@@ -2202,9 +2218,10 @@ global class WS_Service_Contract{
                 }
                 if(request.mainInstalledAtContact != null)
                 {
-                    if(getMatchedContact(request.mainInstalledAtContact ,conList) != null )
+					Id ContactId = getMatchedContact(request.mainInstalledAtContact ,conList , request.installedAtAccount);
+                    if(ContactId != null )
                     {
-                        sc.MaininstalledatContact__c = getMatchedContact(request.mainInstalledAtContact ,conList);
+                        sc.MaininstalledatContact__c = ContactId;
                     }
                     else{
                         sc.MaininstalledatContact__c = null;
@@ -2234,11 +2251,144 @@ global class WS_Service_Contract{
     
     }
     
-    public static Id getMatchedContact(Contact ucon , List<Sobject> conList){
+    public static Id getMatchedContact(Contact ucon , List<Sobject> conList, Id AccountId){
         
-        
+       
         ID ContactId ;
         Contact c = ucon;
+		
+		if(c.GoldenID != null && c.GoldenID !='')
+		{
+			for(Sobject con: conList){
+				
+				if(con.get('SEContactID__c') != null && con.get('SEContactID__c') !='' && con.get('SEContactID__c') == c.GoldenID && AccountId != null &&  con.get('AccountId') == AccountId ){
+					ContactId = con.id;    
+                        break ; 
+				}
+				else if(con.get('SEContactID__c') != null && con.get('SEContactID__c') !='' && con.get('SEContactID__c') == c.GoldenID && AccountId == null )
+				{
+					ContactId = con.id;    
+                        break ; 
+				}
+			}
+		
+		}
+		if(c.emailAddress != null && c.emailAddress !='' && ContactId == null)
+		{
+			for(Sobject con: conList){
+				
+				if(con.get('Email') != null && con.get('Email') !='' && con.get('Email') == c.emailAddress && AccountId != null &&  con.get('AccountId') == AccountId ){
+					ContactId = con.id;    
+                        break ; 
+				}
+				else if(con.get('Email') != null && con.get('Email') !='' && con.get('Email') == c.emailAddress && AccountId == null )
+				{
+					ContactId = con.id;    
+                        break ; 
+				}
+			}
+		
+		}
+		if(c.mobilePhone != null && c.mobilePhone !='' && ContactId == null)
+		{
+			for(Sobject con: conList){
+				
+				if(con.get('MobilePhone') != null && con.get('MobilePhone') !='' && con.get('MobilePhone') == c.mobilePhone && AccountId != null &&  con.get('AccountId') == AccountId ){
+					ContactId = con.id;    
+                        break ; 
+				}
+				else if(con.get('MobilePhone') != null && con.get('MobilePhone') !='' && con.get('MobilePhone') == c.mobilePhone && AccountId == null )
+				{
+					ContactId = con.id;    
+                        break ; 
+				}
+			}
+		
+		}
+		if(c.firstName != null && c.firstName !='' && ContactId == null)
+		{
+			for(Sobject con: conList){
+				
+				if(con.get('FirstName') != null && con.get('FirstName') !='' && con.get('FirstName') == c.firstName && AccountId != null &&  con.get('AccountId') == AccountId ){
+					ContactId = con.id;    
+                        break ; 
+				}
+				else if(con.get('FirstName') != null && con.get('FirstName') !='' && con.get('FirstName') == c.firstName && AccountId == null )
+				{
+					ContactId = con.id;    
+                        break ; 
+				}
+			}
+		
+		}
+		if(c.lastName != null && c.lastName !='' && ContactId == null)
+		{
+			for(Sobject con: conList){
+				
+				if(con.get('LastName') != null && con.get('LastName') !='' && con.get('LastName') == c.lastName && AccountId != null &&  con.get('AccountId') == AccountId ){
+					ContactId = con.id;    
+                        break ; 
+				}
+				else if(con.get('LastName') != null && con.get('LastName') !='' && con.get('LastName') == c.lastName && AccountId == null )
+				{
+					ContactId = con.id;    
+                        break ; 
+				}
+			}
+		
+		}
+		if(c.localFirstName != null && c.localFirstName !='' && ContactId == null)
+		{
+			for(Sobject con: conList){
+				
+				if(con.get('LocalFirstName__c') != null && con.get('LocalFirstName__c') !='' && con.get('LocalFirstName__c') == c.localFirstName && AccountId != null &&  con.get('AccountId') == AccountId ){
+					ContactId = con.id;    
+                        break ; 
+				}
+				else if(con.get('LocalFirstName__c') != null && con.get('LocalFirstName__c') !='' && con.get('LocalFirstName__c') == c.localFirstName && AccountId == null )
+				{
+					ContactId = con.id;    
+                        break ; 
+				}
+			}
+		
+		}
+		if(c.localLastName != null && c.localLastName !='' && ContactId == null)
+		{
+			for(Sobject con: conList){
+				
+				if(con.get('LocalLastName__c') != null && con.get('LocalLastName__c') !='' && con.get('LocalLastName__c') == c.localLastName && AccountId != null && con.get('AccountId') == AccountId ){
+					ContactId = con.id;    
+                        break ; 
+				}
+				else if(con.get('LocalLastName__c') != null && con.get('LocalLastName__c') !='' && con.get('LocalFirstName__c') == c.localLastName && AccountId == null )
+				{
+					ContactId = con.id;    
+                        break ; 
+				}
+			}
+		
+		}
+		if(c.localMiddleInitial != null && c.localMiddleInitial !='' && ContactId == null)
+		{
+			for(Sobject con: conList){
+				
+				if(con.get('LocalMidInit__c') != null && con.get('LocalMidInit__c') !='' && con.get('LocalMidInit__c') == c.localMiddleInitial && AccountId != null &&  con.get('AccountId') == AccountId ){
+					ContactId = con.id;    
+                        break ; 
+				}
+				else if(con.get('LocalMidInit__c') != null && con.get('LocalMidInit__c') !='' && con.get('LocalMidInit__c') == c.localMiddleInitial && AccountId == null )
+				{
+					ContactId = con.id;    
+                        break ; 
+				}
+			}
+		
+		}
+		
+            
+		
+		 /*
         String key ='';
         String ckey ='';
         if(ucon.GoldenID != null && ucon.GoldenID !='')
@@ -2305,7 +2455,8 @@ global class WS_Service_Contract{
                     }
             
             
-        } 
+        } */
+		
         System.debug('\n Log SC: ContactId '+ContactId);      
         return ContactId;
         
