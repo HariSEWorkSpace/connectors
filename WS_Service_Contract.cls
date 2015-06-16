@@ -1431,13 +1431,13 @@ global class WS_Service_Contract{
                         
                     // processing Service contract Header 
                     List<Sobject> conList = new List<Sobject>();
-					if(request.soldToAccount != null)
-					AccountIDSet.add(request.soldToAccount);
-					if(request.billToAccount != null)
-					AccountIDSet.add(request.billToAccount);
-					if(request.installedAtAccount != null)
-					AccountIDSet.add(request.installedAtAccount);
-					
+                    if(request.soldToAccount != null)
+                    AccountIDSet.add(request.soldToAccount);
+                    if(request.billToAccount != null)
+                    AccountIDSet.add(request.billToAccount);
+                    if(request.installedAtAccount != null)
+                    AccountIDSet.add(request.installedAtAccount);
+                    
                     if(request.soldToContact != null){getContactFields(request.soldToContact);}
                     if(request.billToContact != null){getContactFields(request.billToContact);}
                     if(request.mainInstalledAtContact != null){getContactFields(request.mainInstalledAtContact);}
@@ -2062,17 +2062,17 @@ global class WS_Service_Contract{
         
                 String QueryString ='';
                 String WhereClause ='';
-				String AccountFilter ='';
+                String AccountFilter ='';
                 QueryString = ' Select id,SEContactID__c,FirstName,LocalFirstName__c,MidInit__c,LocalMidInit__c,LastName,LocalLastName__c,Email,MobilePhone,WorkPhone__c,AccountId from Contact ';
                 
-				if(AccountIDSet != null && AccountIDSet.size()>0)
+                if(AccountIDSet != null && AccountIDSet.size()>0)
                 {                   
                     AccountFilter +=  ' AccountId in ('+ SOQLListFormat(AccountIDSet) +') ';                    
                 }
-				
+                
                 if(GoldenIDset != null && GoldenIDset.size()>0)
                 {                    
-					WhereClause +=  ' ( SEContactID__c in  ('+ SOQLListFormat(GoldenIDset) +') ';					
+                    WhereClause +=  ' ( SEContactID__c in  ('+ SOQLListFormat(GoldenIDset) +') ';                   
                 }
                 if(firstNameset != null && firstNameset.size()>0)
                 {
@@ -2137,19 +2137,19 @@ global class WS_Service_Contract{
                     else
                     WhereClause +=  ' WorkPhone__c in ('+ SOQLListFormat(workPhoneset) +') ';
                 }
-				if(AccountFilter.length()>0)
-				{
-					if(WhereClause.length()>0)
-					{
-						WhereClause  = ' AND ('+ WhereClause + ' )';
-						WhereClause = AccountFilter + WhereClause;
-					}
-					else{
-						WhereClause = AccountFilter;
-					}
-					
-				}
-					
+                if(AccountFilter.length()>0)
+                {
+                    if(WhereClause.length()>0)
+                    {
+                        WhereClause  = ' AND ('+ WhereClause + ' )';
+                        WhereClause = AccountFilter + WhereClause;
+                    }
+                    else{
+                        WhereClause = AccountFilter;
+                    }
+                    
+                }
+                    
                 Query =  QueryString +' where '+WhereClause+' Limit 10000';
                 System.debug('\n scLog :'+Query);
                 return Query;
@@ -2168,7 +2168,7 @@ global class WS_Service_Contract{
             
                 if(request.soldToContact != null)
                 {
-					Id ContactId = getMatchedContact(request.soldToContact ,conList , request.soldToAccount);
+                    Id ContactId = getMatchedContact(request.soldToContact ,conList , request.soldToAccount);
                     if(ContactId != null )
                     {
                         sc.SVMXC__Contact__c = ContactId; 
@@ -2218,7 +2218,7 @@ global class WS_Service_Contract{
                 }
                 if(request.mainInstalledAtContact != null)
                 {
-					Id ContactId = getMatchedContact(request.mainInstalledAtContact ,conList , request.installedAtAccount);
+                    Id ContactId = getMatchedContact(request.mainInstalledAtContact ,conList , request.installedAtAccount);
                     if(ContactId != null )
                     {
                         sc.MaininstalledatContact__c = ContactId;
@@ -2256,139 +2256,139 @@ global class WS_Service_Contract{
        
         ID ContactId ;
         Contact c = ucon;
-		
-		if(c.GoldenID != null && c.GoldenID !='')
-		{
-			for(Sobject con: conList){
-				
-				if(con.get('SEContactID__c') != null && con.get('SEContactID__c') !='' && con.get('SEContactID__c') == c.GoldenID && AccountId != null &&  con.get('AccountId') == AccountId ){
-					ContactId = con.id;    
+        
+        if(c.GoldenID != null && c.GoldenID !='')
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('SEContactID__c') != null && con.get('SEContactID__c') !='' && con.get('SEContactID__c') == c.GoldenID && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
                         break ; 
-				}
-				else if(con.get('SEContactID__c') != null && con.get('SEContactID__c') !='' && con.get('SEContactID__c') == c.GoldenID && AccountId == null )
-				{
-					ContactId = con.id;    
+                }
+                else if(con.get('SEContactID__c') != null && con.get('SEContactID__c') !='' && con.get('SEContactID__c') == c.GoldenID && AccountId == null )
+                {
+                    ContactId = con.id;    
                         break ; 
-				}
-			}
-		
-		}
-		if(c.emailAddress != null && c.emailAddress !='' && ContactId == null)
-		{
-			for(Sobject con: conList){
-				
-				if(con.get('Email') != null && con.get('Email') !='' && con.get('Email') == c.emailAddress && AccountId != null &&  con.get('AccountId') == AccountId ){
-					ContactId = con.id;    
+                }
+            }
+        
+        }
+        if(c.emailAddress != null && c.emailAddress !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('Email') != null && con.get('Email') !='' && con.get('Email') == c.emailAddress && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
                         break ; 
-				}
-				else if(con.get('Email') != null && con.get('Email') !='' && con.get('Email') == c.emailAddress && AccountId == null )
-				{
-					ContactId = con.id;    
+                }
+                else if(con.get('Email') != null && con.get('Email') !='' && con.get('Email') == c.emailAddress && AccountId == null )
+                {
+                    ContactId = con.id;    
                         break ; 
-				}
-			}
-		
-		}
-		if(c.mobilePhone != null && c.mobilePhone !='' && ContactId == null)
-		{
-			for(Sobject con: conList){
-				
-				if(con.get('MobilePhone') != null && con.get('MobilePhone') !='' && con.get('MobilePhone') == c.mobilePhone && AccountId != null &&  con.get('AccountId') == AccountId ){
-					ContactId = con.id;    
+                }
+            }
+        
+        }
+        if(c.mobilePhone != null && c.mobilePhone !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('MobilePhone') != null && con.get('MobilePhone') !='' && con.get('MobilePhone') == c.mobilePhone && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
                         break ; 
-				}
-				else if(con.get('MobilePhone') != null && con.get('MobilePhone') !='' && con.get('MobilePhone') == c.mobilePhone && AccountId == null )
-				{
-					ContactId = con.id;    
+                }
+                else if(con.get('MobilePhone') != null && con.get('MobilePhone') !='' && con.get('MobilePhone') == c.mobilePhone && AccountId == null )
+                {
+                    ContactId = con.id;    
                         break ; 
-				}
-			}
-		
-		}
-		if(c.firstName != null && c.firstName !='' && ContactId == null)
-		{
-			for(Sobject con: conList){
-				
-				if(con.get('FirstName') != null && con.get('FirstName') !='' && con.get('FirstName') == c.firstName && AccountId != null &&  con.get('AccountId') == AccountId ){
-					ContactId = con.id;    
+                }
+            }
+        
+        }
+        if(c.firstName != null && c.firstName !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('FirstName') != null && con.get('FirstName') !='' && con.get('FirstName') == c.firstName && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
                         break ; 
-				}
-				else if(con.get('FirstName') != null && con.get('FirstName') !='' && con.get('FirstName') == c.firstName && AccountId == null )
-				{
-					ContactId = con.id;    
+                }
+                else if(con.get('FirstName') != null && con.get('FirstName') !='' && con.get('FirstName') == c.firstName && AccountId == null )
+                {
+                    ContactId = con.id;    
                         break ; 
-				}
-			}
-		
-		}
-		if(c.lastName != null && c.lastName !='' && ContactId == null)
-		{
-			for(Sobject con: conList){
-				
-				if(con.get('LastName') != null && con.get('LastName') !='' && con.get('LastName') == c.lastName && AccountId != null &&  con.get('AccountId') == AccountId ){
-					ContactId = con.id;    
+                }
+            }
+        
+        }
+        if(c.lastName != null && c.lastName !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('LastName') != null && con.get('LastName') !='' && con.get('LastName') == c.lastName && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
                         break ; 
-				}
-				else if(con.get('LastName') != null && con.get('LastName') !='' && con.get('LastName') == c.lastName && AccountId == null )
-				{
-					ContactId = con.id;    
+                }
+                else if(con.get('LastName') != null && con.get('LastName') !='' && con.get('LastName') == c.lastName && AccountId == null )
+                {
+                    ContactId = con.id;    
                         break ; 
-				}
-			}
-		
-		}
-		if(c.localFirstName != null && c.localFirstName !='' && ContactId == null)
-		{
-			for(Sobject con: conList){
-				
-				if(con.get('LocalFirstName__c') != null && con.get('LocalFirstName__c') !='' && con.get('LocalFirstName__c') == c.localFirstName && AccountId != null &&  con.get('AccountId') == AccountId ){
-					ContactId = con.id;    
+                }
+            }
+        
+        }
+        if(c.localFirstName != null && c.localFirstName !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('LocalFirstName__c') != null && con.get('LocalFirstName__c') !='' && con.get('LocalFirstName__c') == c.localFirstName && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
                         break ; 
-				}
-				else if(con.get('LocalFirstName__c') != null && con.get('LocalFirstName__c') !='' && con.get('LocalFirstName__c') == c.localFirstName && AccountId == null )
-				{
-					ContactId = con.id;    
+                }
+                else if(con.get('LocalFirstName__c') != null && con.get('LocalFirstName__c') !='' && con.get('LocalFirstName__c') == c.localFirstName && AccountId == null )
+                {
+                    ContactId = con.id;    
                         break ; 
-				}
-			}
-		
-		}
-		if(c.localLastName != null && c.localLastName !='' && ContactId == null)
-		{
-			for(Sobject con: conList){
-				
-				if(con.get('LocalLastName__c') != null && con.get('LocalLastName__c') !='' && con.get('LocalLastName__c') == c.localLastName && AccountId != null && con.get('AccountId') == AccountId ){
-					ContactId = con.id;    
+                }
+            }
+        
+        }
+        if(c.localLastName != null && c.localLastName !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('LocalLastName__c') != null && con.get('LocalLastName__c') !='' && con.get('LocalLastName__c') == c.localLastName && AccountId != null && con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
                         break ; 
-				}
-				else if(con.get('LocalLastName__c') != null && con.get('LocalLastName__c') !='' && con.get('LocalFirstName__c') == c.localLastName && AccountId == null )
-				{
-					ContactId = con.id;    
+                }
+                else if(con.get('LocalLastName__c') != null && con.get('LocalLastName__c') !='' && con.get('LocalFirstName__c') == c.localLastName && AccountId == null )
+                {
+                    ContactId = con.id;    
                         break ; 
-				}
-			}
-		
-		}
-		if(c.localMiddleInitial != null && c.localMiddleInitial !='' && ContactId == null)
-		{
-			for(Sobject con: conList){
-				
-				if(con.get('LocalMidInit__c') != null && con.get('LocalMidInit__c') !='' && con.get('LocalMidInit__c') == c.localMiddleInitial && AccountId != null &&  con.get('AccountId') == AccountId ){
-					ContactId = con.id;    
+                }
+            }
+        
+        }
+        if(c.localMiddleInitial != null && c.localMiddleInitial !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('LocalMidInit__c') != null && con.get('LocalMidInit__c') !='' && con.get('LocalMidInit__c') == c.localMiddleInitial && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
                         break ; 
-				}
-				else if(con.get('LocalMidInit__c') != null && con.get('LocalMidInit__c') !='' && con.get('LocalMidInit__c') == c.localMiddleInitial && AccountId == null )
-				{
-					ContactId = con.id;    
+                }
+                else if(con.get('LocalMidInit__c') != null && con.get('LocalMidInit__c') !='' && con.get('LocalMidInit__c') == c.localMiddleInitial && AccountId == null )
+                {
+                    ContactId = con.id;    
                         break ; 
-				}
-			}
-		
-		}
-		
+                }
+            }
+        
+        }
+        
             
-		
-		 /*
+        
+         /*
         String key ='';
         String ckey ='';
         if(ucon.GoldenID != null && ucon.GoldenID !='')
@@ -2456,7 +2456,7 @@ global class WS_Service_Contract{
             
             
         } */
-		
+        
         System.debug('\n Log SC: ContactId '+ContactId);      
         return ContactId;
         

@@ -504,6 +504,7 @@ global class WS_Work_Order{
             return woresult;
     
     }
+  public Static Set<String> AccntIDSet = new Set<String>();
     public static Set<String> GoldenIDset = new Set<String>();
     public static Set<String> firstNameset = new Set<String>();
     public static Set<String> localFirstNameset = new Set<String>();
@@ -609,7 +610,7 @@ global class WS_Work_Order{
                         wor.workOrderBOReference =  wou.WOBackOfficeReference;
                         wor.workOrderGoupBOReference =  wou.WOGBackOfficeReference;
                         wor.TECH_WOBackOfficeRecordID = wou.TECH_WOBackOfficeRecordID;
-                        wor.errorMessage = ' Work order is allready exist with BackOfficeReference for this BackOfficeSystem ';
+                        wor.errorMessage = ' Work order is already exist with BackOfficeReference for this BackOfficeSystem ';
                         worList.add(wor);
                      
                      }
@@ -663,6 +664,10 @@ global class WS_Work_Order{
                         wogrefset.add(wou.WOBackOfficeReference );
                     
                     }
+          if(wou.installedAtAccountbFOID != null){
+            System.debug('\n CLog : '+wou.installedAtAccountbFOID);
+            AccntIDSet.add(wou.installedAtAccountbFOID);
+          }
                     
                 }
                 if(ipgolden != null && ipgolden.size()>0){
@@ -721,11 +726,18 @@ global class WS_Work_Order{
                 wo.FirstSynchronizationDate__c = system.now();
                 wo.LastSynchronizationDate__c = system.now();
                 
-                if(wou.contact != null && getMatchedContact(wou.contact ,conList2) != null )
+                //if(wou.contact != null && getMatchedContact(wou.contact ,conList2) != null )
+        if(wou.contact != null)
                 {
-                    wo.SVMXC__Contact__c = getMatchedContact(wou.contact ,conList2); 
+          Id ContactId =getMatchedContact(wou.contact ,conList2,wou.installedAtAccountbFOID);
+          if(ContactId!=null)
+          {
+            wo.SVMXC__Contact__c = ContactId; 
+          }
                 }
-                else if(wou.contact != null && getMatchedContact(wou.contact ,conList2) == null){
+                //else if(wou.contact != null && getMatchedContact(wou.contact ,conList2) == null){
+        else if(wou.contact != null && getMatchedContact(wou.contact,conList2,wou.installedAtAccountbFOID) == null)
+        {
                         wo.ContactInformation__c  += 'CONTACT AUTO-MATCHING FAILED \n Contact :';
                         if(wou.contact.firstName != null )
                             wo.ContactInformation__c  += wou.contact.firstName +' ';
@@ -1787,6 +1799,7 @@ global class WS_Work_Order{
                         if(request.success){
                             wo.SynchronizationLog__c ='Work Order CREATED in Back Office';
                             wo.BackOfficeReference__c = request.workOrderBOReference;
+                            wo.TECH_IsBoundToBackOffice__c = true;
                             wo.SVMXC__Order_Status__c = 'Unscheduled';
                             if(wog != null){
                                 wog.BackOfficeReference__c = request.workOrderGroupBOReference;
@@ -1850,18 +1863,33 @@ global class WS_Work_Order{
                             
                             }
                             else if(OracleSystems.contains(wo.BackOfficeSystem__c)){
-                                List<SVMXC__RMA_Shipment_Order__c> partsOrderList = [select id, Name,SVMXC__Order_Status__c from SVMXC__RMA_Shipment_Order__c where SVMXC__Service_Order__c = : request.workOrderbFOId and SVMXC__Order_Status__c = 'Open'];
-                                    for(SVMXC__RMA_Shipment_Order__c obj: partsOrderList){
-        
-        
-                                        obj.SVMXC__Order_Status__c = 'Pending Release in BO';
-        
-        
-                                        obj.Last_Synchronization__c = system.now();
-                                        obj.Synchronization_log__c = 'Part Order PENDING RELEASE in Back Office';
+                                //Yassine.B 04/06/2015 - START - patch code DEF-DEF-7241
+                                Schema.DescribeSObjectResult dSobjres = Schema.SObjectType.SVMXC__RMA_Shipment_Order__c; 
+                                Map<String,Schema.RecordTypeInfo> PartOrderRecordTypeInfo = dSobjres.getRecordTypeInfosByName(); 
+                                List<SVMXC__RMA_Shipment_Order__c> partsOrderList = [select id, Name,SVMXC__Order_Status__c, RecordTypeId from SVMXC__RMA_Shipment_Order__c where SVMXC__Service_Order__c = : request.workOrderbFOId and SVMXC__Order_Status__c = 'Open'];
+                                List<SVMXC__RMA_Shipment_Order__c> partOrderListTarget = new List<SVMXC__RMA_Shipment_Order__c>();
+                                for(SVMXC__RMA_Shipment_Order__c obj: partsOrderList){
+                                    if(wo.SVMXC__Order_Status__c =='Unscheduled' || wo.SVMXC__Order_Status__c =='Scheduled' || wo.SVMXC__Order_Status__c =='Customer Confirmed' || wo.SVMXC__Order_Status__c =='Acknowledge FSE' ||  wo.SVMXC__Order_Status__c =='WIP' ){
+                                        if(obj.RecordTypeId == PartOrderRecordTypeInfo.get('Shipment').getRecordTypeId()){
+                                            obj.SVMXC__Order_Status__c = 'Pending Release in BO';      
+                                            obj.Last_Synchronization__c = system.now();
+                                            obj.Synchronization_log__c = 'Part Order PENDING RELEASE in Back Office';
+                                            partOrderListTarget.add(obj);
+                                        }
+                                    }else if(wo.SVMXC__Order_Status__c == 'Service Complete'){
+                                        if(obj.RecordTypeId == PartOrderRecordTypeInfo.get('RMA').getRecordTypeId()){
+                                            obj.SVMXC__Order_Status__c = 'Pending Release in BO';      
+                                            obj.Last_Synchronization__c = system.now();
+                                            obj.Synchronization_log__c = 'Part Order PENDING RELEASE in Back Office';   
+                                            partOrderListTarget.add(obj);
+                                        }
                                     }
                                     
-                                    update partsOrderList;
+                                }
+                                if(partOrderListTarget.size() > 0){
+                                    update partOrderListTarget;
+                                }
+                                //Yassine.B 04/06/2015 - END - patch code DEF-DEF-7241
                            }
                            //Yassine.B 15/04/2015 - END - patch code move into the success=true case
      
@@ -3218,10 +3246,19 @@ global class WS_Work_Order{
     public static String getContactQuery(){
         
                 String Query='';
+        //if(request.soldToAccount != null)
+                    //AccntIDSet.add(request.soldToAccount);
         
                 String QueryString ='';
                 String WhereClause ='';
-                QueryString = ' Select id,SEContactID__c,FirstName,LocalFirstName__c,MidInit__c,LocalMidInit__c,LastName,LocalLastName__c,Email,MobilePhone,WorkPhone__c from Contact ';
+        String AccountFilter ='';
+                //QueryString = ' Select id,SEContactID__c,FirstName,LocalFirstName__c,MidInit__c,LocalMidInit__c,LastName,LocalLastName__c,Email,MobilePhone,WorkPhone__c from Contact ';
+        QueryString = ' Select id,SEContactID__c,FirstName,LocalFirstName__c,MidInit__c,LocalMidInit__c,LastName,LocalLastName__c,Email,MobilePhone,WorkPhone__c,AccountId from Contact ';
+        
+        if(AccntIDSet != null && AccntIDSet.size()>0)
+                {                   
+                    AccountFilter +=  ' AccountId in ('+ SOQLListFormat(AccntIDSet) +') ';                    
+                }
                 
                 if(GoldenIDset != null && GoldenIDset.size()>0)
                 {
@@ -3290,16 +3327,158 @@ global class WS_Work_Order{
                     else
                     WhereClause +=  ' WorkPhone__c in ('+ SOQLListFormat(workPhoneset) +') ';
                 }
-                Query =  QueryString +' where '+WhereClause;
+        if(AccountFilter.length()>0)
+                {
+                    if(WhereClause.length()>0)
+                    {
+                        WhereClause  = ' AND ('+ WhereClause + ' )';
+                        WhereClause = AccountFilter + WhereClause;
+                    }
+                    else{
+                        WhereClause = AccountFilter;
+                    }
+                    
+                }
+                Query =  QueryString +' where '+WhereClause+' limit 10000';
                 System.debug('\n scLog :'+Query);
                 return Query;
         
     }
-    public static Id getMatchedContact(Contact ucon , List<Sobject> conList){
-        
-        
+  //public static Id getMatchedContact(Contact ucon , List<Sobject> conList){
+    public static Id getMatchedContact(Contact ucon , List<Sobject> conList,Id AccountId){
+           
         ID ContactId ;
         Contact c = ucon;
+        
+        if(c.GoldenID != null && c.GoldenID !='')
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('SEContactID__c') != null && con.get('SEContactID__c') !='' && con.get('SEContactID__c') == c.GoldenID && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
+                        break ; 
+                }
+                else if(con.get('SEContactID__c') != null && con.get('SEContactID__c') !='' && con.get('SEContactID__c') == c.GoldenID && AccountId == null )
+                {
+                    ContactId = con.id;    
+                        break ; 
+                }
+            }
+        
+        }
+        if(c.emailAddress != null && c.emailAddress !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('Email') != null && con.get('Email') !='' && con.get('Email') == c.emailAddress && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
+                        break ; 
+                }
+                else if(con.get('Email') != null && con.get('Email') !='' && con.get('Email') == c.emailAddress && AccountId == null )
+                {
+                    ContactId = con.id;    
+                        break ; 
+                }
+            }
+        
+        }
+        if(c.mobilePhone != null && c.mobilePhone !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('MobilePhone') != null && con.get('MobilePhone') !='' && con.get('MobilePhone') == c.mobilePhone && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
+                        break ; 
+                }
+                else if(con.get('MobilePhone') != null && con.get('MobilePhone') !='' && con.get('MobilePhone') == c.mobilePhone && AccountId == null )
+                {
+                    ContactId = con.id;    
+                        break ; 
+                }
+            }
+        
+        }
+        if(c.firstName != null && c.firstName !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('FirstName') != null && con.get('FirstName') !='' && con.get('FirstName') == c.firstName && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
+                        break ; 
+                }
+                else if(con.get('FirstName') != null && con.get('FirstName') !='' && con.get('FirstName') == c.firstName && AccountId == null )
+                {
+                    ContactId = con.id;    
+                        break ; 
+                }
+            }
+        
+        }
+        if(c.lastName != null && c.lastName !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('LastName') != null && con.get('LastName') !='' && con.get('LastName') == c.lastName && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
+                        break ; 
+                }
+                else if(con.get('LastName') != null && con.get('LastName') !='' && con.get('LastName') == c.lastName && AccountId == null )
+                {
+                    ContactId = con.id;    
+                        break ; 
+                }
+            }
+        
+        }
+        if(c.localFirstName != null && c.localFirstName !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('LocalFirstName__c') != null && con.get('LocalFirstName__c') !='' && con.get('LocalFirstName__c') == c.localFirstName && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
+                        break ; 
+                }
+                else if(con.get('LocalFirstName__c') != null && con.get('LocalFirstName__c') !='' && con.get('LocalFirstName__c') == c.localFirstName && AccountId == null )
+                {
+                    ContactId = con.id;    
+                        break ; 
+                }
+            }
+        
+        }
+        if(c.localLastName != null && c.localLastName !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('LocalLastName__c') != null && con.get('LocalLastName__c') !='' && con.get('LocalLastName__c') == c.localLastName && AccountId != null && con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
+                        break ; 
+                }
+                else if(con.get('LocalLastName__c') != null && con.get('LocalLastName__c') !='' && con.get('LocalFirstName__c') == c.localLastName && AccountId == null )
+                {
+                    ContactId = con.id;    
+                        break ; 
+                }
+            }
+        
+        }
+        if(c.localMiddleInitial != null && c.localMiddleInitial !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('LocalMidInit__c') != null && con.get('LocalMidInit__c') !='' && con.get('LocalMidInit__c') == c.localMiddleInitial && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
+                        break ; 
+                }
+                else if(con.get('LocalMidInit__c') != null && con.get('LocalMidInit__c') !='' && con.get('LocalMidInit__c') == c.localMiddleInitial && AccountId == null )
+                {
+                    ContactId = con.id;    
+                        break ; 
+                }
+            }
+        
+        }
+    /*
         String key ='';
         String ckey ='';
         if(ucon.GoldenID != null && ucon.GoldenID !='')
@@ -3366,7 +3545,7 @@ global class WS_Work_Order{
                     }
             
             
-        } 
+        } */
         System.debug('\n Log SC: ContactId '+ContactId);      
         return ContactId;
         
@@ -3395,7 +3574,7 @@ global class WS_Work_Order{
         Map<id, PartsOrderLinesResult> plineResultMap = new Map<id, PartsOrderLinesResult>();
         Map<id,List<PartsOrderLinesResult>> pidPlineResults = new Map<id,List<PartsOrderLinesResult>>();
         Map<id,PartsOrderResult> pidporderResultmap = new Map<id,PartsOrderResult>();
-		Set<String> calculatedPlantSet = new Set<String>();
+        Set<String> calculatedPlantSet = new Set<String>();
         
         
         for(PartsOrder punit: request.PartsOrders){
@@ -3409,20 +3588,20 @@ global class WS_Work_Order{
                         if(plUnit.partOrderLinebFOID != null){                            
                             porderLineMap.put(plUnit.partOrderLinebFOID, plUnit);
                             polpomap.put(plUnit.partOrderLinebFOID,punit.partOrderbFOID);
-							
+                            
                         }
-						if(plUnit.calculatedPlant != null && plUnit.calculatedPlant !=''){
-								calculatedPlantSet.add(plUnit.calculatedPlant);
-						}
-						
+                        if(plUnit.calculatedPlant != null && plUnit.calculatedPlant !=''){
+                                calculatedPlantSet.add(plUnit.calculatedPlant);
+                        }
+                        
                     }
                 }
         }
         System.debug('\n cLog: '+porderMap);
         List<PartsOrderResult> PartsOrderUnitList = new List<PartsOrderResult>();
         if(porderMap!= null && porderMap.size()>0){
-            
-            List<SVMXC__RMA_Shipment_Order__c> poList =[ select id, name ,TECH_BOPartsOrderRecordId__c,TECH_BOLastUpdateTimestamp__c,SVMXC__Order_Status__c,Synchronization_log__c, BackOfficeReference__c FROM  SVMXC__RMA_Shipment_Order__c where id in :porderMap.keySet()  ];
+            //Yassine.B 11/06/2015 - Last_Synchronization__c added in the query (DEF-7348)
+            List<SVMXC__RMA_Shipment_Order__c> poList =[ select id, name ,TECH_BOPartsOrderRecordId__c,TECH_BOLastUpdateTimestamp__c,SVMXC__Order_Status__c,Synchronization_log__c, BackOfficeReference__c, Last_Synchronization__c FROM  SVMXC__RMA_Shipment_Order__c where id in :porderMap.keySet()  ];
             if(poList != null && poList.size()>0){
                 for(SVMXC__RMA_Shipment_Order__c poObj: poList){
                 
@@ -3451,7 +3630,8 @@ global class WS_Work_Order{
                         }
                         if(punit.synchronizationLog != null && punit.synchronizationLog !='')
                         {
-                            poObj.Synchronization_log__c = punit.synchronizationLog;                        
+                            poObj.Synchronization_log__c = punit.synchronizationLog; 
+                            poObj.Last_Synchronization__c = System.now(); // Yassine.B 11/06/2015 (DEF-7348) put the last sync date/time when we got a log update from BO
                         }
                     }
                 }
@@ -3495,15 +3675,15 @@ global class WS_Work_Order{
         if(porderLineMap != null && porderLineMap.size()>0){
         
             List<SVMXC__RMA_Shipment_Line__c> porderLineList =[select id,SVMXC__RMA_Shipment_Order__c, name,SVMXC__Expected_Quantity2__c ,Shipped_Qty__c ,ShippingStatus__c ,Calculated_plant__c ,SVMXC__Expected_Ship_Date__c ,BackOfficeReference__c ,Carrier__c ,Tracking_number__c, TECH_BOPartsOrderLineRecordId__c,TECH_BOLastUpdateTimestamp__c, BOMaterialReference__c  from SVMXC__RMA_Shipment_Line__c where id in :porderLineMap.keySet() ]; //Yassine.B 09/04/2015
-			Map<String,Plant__c> plantMap = new Map<String,Plant__c>();
-			
-			if(calculatedPlantSet != null && calculatedPlantSet.size()>0){
-				for(Plant__c obj:  [select id,Name from Plant__c where name in :calculatedPlantSet ])
-				{
-					plantMap.put(obj.name,obj);
-				}
-			}
-			
+            Map<String,Plant__c> plantMap = new Map<String,Plant__c>();
+            
+            if(calculatedPlantSet != null && calculatedPlantSet.size()>0){
+                for(Plant__c obj:  [select id,Name from Plant__c where name in :calculatedPlantSet ])
+                {
+                    plantMap.put(obj.name,obj);
+                }
+            }
+            
             if(porderLineList != null && porderLineList.size()>0){
                 for(SVMXC__RMA_Shipment_Line__c polObj:porderLineList){
                 
@@ -3569,7 +3749,7 @@ global class WS_Work_Order{
                         }                        
                     }
                 }
-				Database.SaveResult[] Pol_results  = CreateOrUpdateServices((List<Sobject>)porderLineList,'UPDATE');
+                Database.SaveResult[] Pol_results  = CreateOrUpdateServices((List<Sobject>)porderLineList,'UPDATE');
                 for(Integer k=0;k<Pol_results.size();k++ )
                 {
                     Database.SaveResult sr = Pol_results[k];
@@ -3608,7 +3788,8 @@ global class WS_Work_Order{
                     
                     plineResultMap.put(polr.partOrderLinebFOID, polr);
                     /*
-                    for(PartsOrderResult pr: PartsOrderUnitList){                    
+                    for(PartsOrderResult pr: PartsOrderUnitList){
+                    
                         if(pr.partOrderbFOID == porderLineList[k].SVMXC__RMA_Shipment_Order__c )
                         pr.PartsOrderLinesResults.add(polr);
                     
