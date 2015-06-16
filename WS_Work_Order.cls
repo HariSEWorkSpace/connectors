@@ -725,19 +725,20 @@ global class WS_Work_Order{
                 wo.SynchronizationLog__c ='Work Order SYNCED with Back Office';
                 wo.FirstSynchronizationDate__c = system.now();
                 wo.LastSynchronizationDate__c = system.now();
-                
+                Id ContactId = null;
                 //if(wou.contact != null && getMatchedContact(wou.contact ,conList2) != null )
-        if(wou.contact != null)
+				if(wou.contact != null)
                 {
-          Id ContactId =getMatchedContact(wou.contact ,conList2,wou.installedAtAccountbFOID);
-          if(ContactId!=null)
-          {
-            wo.SVMXC__Contact__c = ContactId; 
-          }
+					 ContactId =getMatchedContact(wou.contact ,conList2,wou.installedAtAccountbFOID);
+					  if(ContactId!=null)
+					  {
+						wo.SVMXC__Contact__c = ContactId; 
+					  }
                 }
                 //else if(wou.contact != null && getMatchedContact(wou.contact ,conList2) == null){
-        else if(wou.contact != null && getMatchedContact(wou.contact,conList2,wou.installedAtAccountbFOID) == null)
-        {
+				//else if(wou.contact != null && getMatchedContact(wou.contact,conList2,wou.installedAtAccountbFOID) == null)
+				else if(wou.contact != null && ContactId == null)
+				{
                         wo.ContactInformation__c  += 'CONTACT AUTO-MATCHING FAILED \n Contact :';
                         if(wou.contact.firstName != null )
                             wo.ContactInformation__c  += wou.contact.firstName +' ';
@@ -747,6 +748,8 @@ global class WS_Work_Order{
                             wo.ContactInformation__c  += wou.contact.emailAddress+' ';
                         if(wou.contact.mobilePhone != null)
                             wo.ContactInformation__c  += wou.contact.mobilePhone+' ';
+						if(wou.contact.workPhone != null)
+                            wo.ContactInformation__c  += wou.contact.workPhone+' ';
                         wo.ContactInformation__c  += '\n';
                 }
                 if(wou.mainInstalledProduct!= null )
