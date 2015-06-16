@@ -1972,6 +1972,13 @@ global class WS_Work_Order{
         MandatoryFields mf = new MandatoryFields();
         String mandatoryFields ='';                
         Boolean mandatory = true;  
+		
+		if(request.installedAtAccountbFOID != null ){
+        }
+        else{
+            mandatory = false;
+            mandatoryFields += mandatoryFields + ' installedAtAccountbFOID';
+        }
         /*      
         
         if(request.customerRequestedDate != null ){
