@@ -730,16 +730,22 @@ global class WS_Work_Order{
 				if(wou.contact != null)
                 {
 					 ContactId =getMatchedContact(wou.contact ,conList2,wou.installedAtAccountbFOID);
-					  if(ContactId!=null)
+					//commented by jyotiranjan  
+                    /*if(ContactId!=null)
 					  {
 						wo.SVMXC__Contact__c = ContactId; 
-					  }
+					  }*/
+                }
+                if(ContactId!=null)
+                {
+                    wo.SVMXC__Contact__c = ContactId; 
                 }
                 //else if(wou.contact != null && getMatchedContact(wou.contact ,conList2) == null){
 				//else if(wou.contact != null && getMatchedContact(wou.contact,conList2,wou.installedAtAccountbFOID) == null)
-				else if(wou.contact != null && ContactId == null)
+				//else if(wou.contact != null && ContactId == null)//commented by jyotiranjan
+				else if(ContactId == null)
 				{
-                        wo.ContactInformation__c  += 'CONTACT AUTO-MATCHING FAILED \n Contact :';
+                        wo.ContactInformation__c  = 'CONTACT AUTO-MATCHING FAILED \n Contact :';
                         if(wou.contact.firstName != null )
                             wo.ContactInformation__c  += wou.contact.firstName +' ';
                         if(wou.contact.lastName != null)
@@ -3481,6 +3487,22 @@ global class WS_Work_Order{
                         break ; 
                 }
                 else if(con.get('LocalMidInit__c') != null && con.get('LocalMidInit__c') !='' && con.get('LocalMidInit__c') == c.localMiddleInitial && AccountId == null )
+                {
+                    ContactId = con.id;    
+                        break ; 
+                }
+            }
+        
+        }
+        if(c.workPhone != null && c.workPhone !='' && ContactId == null)
+        {
+            for(Sobject con: conList){
+                
+                if(con.get('WorkPhone__c') != null && con.get('WorkPhone__c') !='' && con.get('WorkPhone__c') == c.workPhone && AccountId != null &&  con.get('AccountId') == AccountId ){
+                    ContactId = con.id;    
+                        break ; 
+                }
+                else if(con.get('WorkPhone__c') != null && con.get('WorkPhone__c') !='' && con.get('WorkPhone__c') == c.workPhone && AccountId == null )
                 {
                     ContactId = con.id;    
                         break ; 
