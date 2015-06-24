@@ -554,10 +554,15 @@ global class WS_Work_Order{
                     {                   
                         WorkOrderMandatoryPass.add(wu);
                     }
-                    else{                   
+                    else{ 
+						 					
                       WorkOrderResult wor = new WorkOrderResult();
                       wor.success = false;
-                      wor.type = 'CREATED';                     
+                      wor.type = 'CREATED';    
+					  wor.backOfficeSystem = wu.backOfficeSystem;
+					  wor.workOrderGoupBOReference = wu.WOGBackOfficeReference;
+					  wor.workOrderBOReference  = wu.WOBackOfficeReference;
+					  wor.TECH_WOBackOfficeRecordID = wu.TECH_WOBackOfficeRecordID;
                       wor.errorMessage =' Mandatory Fields are missing '+ mf.fields;
                       worList.add(wor);                 
                     }               
