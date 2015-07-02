@@ -871,7 +871,13 @@ global class WS_Work_Order{
                             //site.TECH_CreateFromWS_IP__c = true;
                             site.SVMXC__Account__c = Id.valueOf(sobj.get('Id')+'');
                             SObject tObj = (SObject)site;
-                            tObj.put('Name',sobj.get('Name')+'_'+'SITE');
+                           
+							//DEF-7527
+							// Stared 
+							//tObj.put('Name',sobj.get('Name')+'_'+'SITE');
+							String locationName =  Ap_Location.computeSiteName(sobj.get('Name'));
+							tObj.put('Name',locationName);
+							// Ended
                             tObj.put('RecordTypeId',Label.CLOCT13SRV36);
                             tObj.put('SVMXC__Location_Type__c', 'Site');
                             
@@ -3603,7 +3609,7 @@ global class WS_Work_Order{
     public static string SOQLListFormat(set<string> input){   
         String SOQL_ListFormat = '';
         for (string Value : input) {
-                String value_in_quotes = '\''+Value+'\'';
+                String value_in_quotes = '\''+String.escapeSingleQuotes(Value)+'\'';
         if (SOQL_ListFormat!='') { SOQL_ListFormat+=','; }  //  add a comma if this isn't the first one
                 SOQL_ListFormat += value_in_quotes;
         }   
