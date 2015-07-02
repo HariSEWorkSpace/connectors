@@ -1699,14 +1699,22 @@ global class WS_Service_Contract{
             if(sid != null)
             {
                 
-                SVMXC__Service_Contract__c sc = [select id, Synchronization_log__c,TECH_OutboundEvent__c,Last_Synchronization__c from SVMXC__Service_Contract__c where id =: sid];
+                SVMXC__Service_Contract__c sc = [select id, Status__c,Synchronization_log__c,TECH_OutboundEvent__c,Last_Synchronization__c from SVMXC__Service_Contract__c where id =: sid];
                 if(successBOUpdate){
                     sc.TECH_OutboundEvent__c = null;
                     sc.Synchronization_Log_F2B__c = TECH_OutboundEvent + ' event => '+ 'BO Service Contract Updated';
                 }
                 else{
                     sc.Synchronization_Log_F2B__c = TECH_OutboundEvent+ ' event => ' + 'BO Service Contract Not Updated due to BO error:\n[' + BOerrorMessage + ']';
+					// DEF-7357
+					if(sc.TECH_OutboundEvent__c == System.label.CLJUL15SRV01)
+					{
+						sc.Status__c = System.label.CLJUL15SRV02;
+						sc.TECH_OutboundEvent__c = null;
+					}
                 }
+				
+				
                 
                 sc.Synchronization_log__c = system.now();
                 sc.Last_Synchronization__c = system.now();
