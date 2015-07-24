@@ -543,6 +543,7 @@ global class WS_Work_Order{
             List<WorkOrder> WorkOrderListToProcess = new List<WorkOrder>();
             List<WorkOrder> WorkOrderMandatoryPass = new List<WorkOrder>();
             Map<String,SVMXC__Service_Order__c> existingMap = new Map<String,SVMXC__Service_Order__c>();
+			 String SOPrefix = SObjectType.Product2.getKeyPrefix();
             
             RecordType rt =[SELECT Description,DeveloperName,Id,Name,SobjectType FROM RecordType where SobjectType='SVMXC__Service_Order__c' and DeveloperName ='WO_ConnectedWorkOrder'];
             if(WorkOrderList != null){
@@ -551,8 +552,29 @@ global class WS_Work_Order{
                     MandatoryFields mf = new MandatoryFields();
                      mf = CreateMandataryCheck(wu);
                     if( mf.isMFPass)
-                    {                   
-                        WorkOrderMandatoryPass.add(wu);
+                    {   
+
+						if(Wu.productbFOID != null && Wu.productbFOID !='' ){
+							 if(Wu.productbFOID.length()> 3 && Wu.productbFOID.substring(0, 3) != SOPrefix)
+							 {
+								  WorkOrderResult wor = new WorkOrderResult();
+								  wor.success = false;
+								  wor.type = 'CREATED';    
+								  wor.backOfficeSystem = wu.backOfficeSystem;
+								  wor.workOrderGoupBOReference = wu.WOGBackOfficeReference;
+								  wor.workOrderBOReference  = wu.WOBackOfficeReference;
+								  wor.TECH_WOBackOfficeRecordID = wu.TECH_WOBackOfficeRecordID;
+								  wor.errorMessage =' Invalid SKU ';
+								  worList.add(wor);
+							  }
+                            else{
+                                WorkOrderMandatoryPass.add(wu);
+                            }
+							  
+						}
+						else{
+							WorkOrderMandatoryPass.add(wu);
+						}
                     }
                     else{ 
                                             
@@ -565,7 +587,9 @@ global class WS_Work_Order{
                       wor.TECH_WOBackOfficeRecordID = wu.TECH_WOBackOfficeRecordID;
                       wor.errorMessage =' Mandatory Fields are missing '+ mf.fields;
                       worList.add(wor);                 
-                    }               
+                    }   
+					
+					
                 }
             
             
@@ -2131,10 +2155,10 @@ global class WS_Work_Order{
     public Static List<SVMXC__Service_Order__c> getWorkOrderObjects(Set<Id> woids){
     
         List<SVMXC__Service_Order__c>  wos = new List<SVMXC__Service_Order__c>();
-        //wo = [select ID,Name,SVMXC__Company__c,SVMXC__Contact__c,CustomerRequestedDate__c,CustomerRequestedTime__c,BusinessUnit__c,SVMXC__Priority__c,SVMXC__Scheduled_Date_Time__c,WorkOrderGroup__c,WorkOrderGroup__r.BackOfficeReference__c,WorkOrderName__c,Comments_to_Planner__c,CountryOfBackOffice__c,BackOfficeSystem__c,SVMXC__Order_Status__c,SubStatus__c,Work_Order_Category__c,SVMXC__Order_Type__c,WorkOrderSubType__c,IsBillable__c,SVMXC__Billing_Type__c,SVMXC__Group_Member__c,OwnerID,Parent_Work_Order__c,SoldToAccount__c,SVMXC__Component__c,SVMXC__Product__c,Project__c,SVMXC__Service_Contract__c,ServiceLine__c,BackOfficeReference__c,SVMXC__Company__r.SEAccountID__c,SVMXC__Company__r.Name,SVMXC__Company__r.AccountLocalName__c,SVMXC__Company__r.Street__c,SVMXC__Company__r.StreetLocalLang__c,SVMXC__Company__r.AdditionalAddress__c,SVMXC__Company__r.LocalAdditionalAddress__c,SVMXC__Company__r.ZipCode__c,SVMXC__Company__r.City__c,SVMXC__Company__r.LocalCity__c,SVMXC__Company__r.Country__r.CountryCode__c,SVMXC__Company__r.StateProvince__r.Name,SVMXC__Contact__r.SEContactID__c,SVMXC__Contact__r.FirstName,SVMXC__Contact__r.LocalFirstName__c,SVMXC__Contact__r.MidInit__c,SVMXC__Contact__r.LocalMidInit__c,SVMXC__Contact__r.LastName,SVMXC__Contact__r.LocalLastName__c,SVMXC__Contact__r.Email,SVMXC__Contact__r.MobilePhone,SVMXC__Contact__r.WorkPhone__c,SVMXC__SLA_Terms__c, SVMXC__SLA_Terms__r.Name, SVMXC__Group_Member__r.SVMXC__Role__c,SVMXC__Group_Member__r.SVMXC__Salesforce_User__r.FirstName,SVMXC__Preferred_Technician__c,SVMXC__Group_Member__r.SVMXC__Salesforce_User__r.LastName,SVMXC__Group_Member__r.SVMXC__Salesforce_User__r.Email,SVMXC__Group_Member__r.SESAID__c,SVMXC__Group_Member__r.ThirdPartyContact__r.FirstName,SVMXC__Group_Member__r.ThirdPartyContact__r.LastName,SVMXC__Group_Member__r.ThirdPartyContact__r.Email,SVMXC__Component__r.GoldenAssetId__c,SVMXC__Component__r.Name,SVMXC__Component__r.SVMXC__Company__r.SEAccountID__c,SVMXC__Component__r.SVMXC__Serial_Lot_Number__c,SVMXC__Component__r.SchneiderCommercialReference__c,SVMXC__Component__r.SVMXC__Company__r.Country__r.CountryCode__c,SVMXC__Service_Contract__r.BackOfficeReference__c,ServiceLine__r.BackOfficeReference__c,Sales_Order_Number__c,salesOrderLineNumber__c,Customer_Reference_Number__c,PONumber__c,SVMXC__Primary_Territory__r.Name,CustomerReferenceNumber__c from SVMXC__Service_Order__c where id =:woid];
+        //wo = [select ID,Name,SVMXC__Company__c,SVMXC__Contact__c,CustomerRequestedDate__c,CustomerRequestedTime__c,BusinessUnit__c,Priority__c,SVMXC__Scheduled_Date_Time__c,WorkOrderGroup__c,WorkOrderGroup__r.BackOfficeReference__c,WorkOrderName__c,Comments_to_Planner__c,CountryOfBackOffice__c,BackOfficeSystem__c,SVMXC__Order_Status__c,SubStatus__c,Work_Order_Category__c,SVMXC__Order_Type__c,WorkOrderSubType__c,IsBillable__c,SVMXC__Billing_Type__c,SVMXC__Group_Member__c,OwnerID,Parent_Work_Order__c,SoldToAccount__c,SVMXC__Component__c,SVMXC__Product__c,Project__c,SVMXC__Service_Contract__c,ServiceLine__c,BackOfficeReference__c,SVMXC__Company__r.SEAccountID__c,SVMXC__Company__r.Name,SVMXC__Company__r.AccountLocalName__c,SVMXC__Company__r.Street__c,SVMXC__Company__r.StreetLocalLang__c,SVMXC__Company__r.AdditionalAddress__c,SVMXC__Company__r.LocalAdditionalAddress__c,SVMXC__Company__r.ZipCode__c,SVMXC__Company__r.City__c,SVMXC__Company__r.LocalCity__c,SVMXC__Company__r.Country__r.CountryCode__c,SVMXC__Company__r.StateProvince__r.Name,SVMXC__Contact__r.SEContactID__c,SVMXC__Contact__r.FirstName,SVMXC__Contact__r.LocalFirstName__c,SVMXC__Contact__r.MidInit__c,SVMXC__Contact__r.LocalMidInit__c,SVMXC__Contact__r.LastName,SVMXC__Contact__r.LocalLastName__c,SVMXC__Contact__r.Email,SVMXC__Contact__r.MobilePhone,SVMXC__Contact__r.WorkPhone__c,SVMXC__SLA_Terms__c, SVMXC__SLA_Terms__r.Name, SVMXC__Group_Member__r.SVMXC__Role__c,SVMXC__Group_Member__r.SVMXC__Salesforce_User__r.FirstName,SVMXC__Preferred_Technician__c,SVMXC__Group_Member__r.SVMXC__Salesforce_User__r.LastName,SVMXC__Group_Member__r.SVMXC__Salesforce_User__r.Email,SVMXC__Group_Member__r.SESAID__c,SVMXC__Group_Member__r.ThirdPartyContact__r.FirstName,SVMXC__Group_Member__r.ThirdPartyContact__r.LastName,SVMXC__Group_Member__r.ThirdPartyContact__r.Email,SVMXC__Component__r.GoldenAssetId__c,SVMXC__Component__r.Name,SVMXC__Component__r.SVMXC__Company__r.SEAccountID__c,SVMXC__Component__r.SVMXC__Serial_Lot_Number__c,SVMXC__Component__r.SchneiderCommercialReference__c,SVMXC__Component__r.SVMXC__Company__r.Country__r.CountryCode__c,SVMXC__Service_Contract__r.BackOfficeReference__c,ServiceLine__r.BackOfficeReference__c,Sales_Order_Number__c,salesOrderLineNumber__c,Customer_Reference_Number__c,PONumber__c,SVMXC__Primary_Territory__r.Name,CustomerReferenceNumber__c from SVMXC__Service_Order__c where id =:woid];
         /** Yassine.B : added estimated and quotation, CurrencyIsoCode fields on 19/02/2015 **/
         wos = [select ID,Name,SVMXC__Company__c,SVMXC__Contact__c,CustomerRequestedDate__c,CustomerRequestedTime__c,BusinessUnit__c, Service_Business_Unit__c,
-               SVMXC__Priority__c,SVMXC__Scheduled_Date_Time__c,WorkOrderGroup__c,WorkOrderGroup__r.BackOfficeReference__c,WorkOrderName__c,
+               Priority__c,SVMXC__Scheduled_Date_Time__c,WorkOrderGroup__c,WorkOrderGroup__r.BackOfficeReference__c,WorkOrderName__c,
                Comments_to_Planner__c,CountryOfBackOffice__c,BackOfficeSystem__c,SVMXC__Order_Status__c,SubStatus__c,Work_Order_Category__c,
                SVMXC__Order_Type__c,WorkOrderSubType__c,IsBillable__c,SVMXC__Billing_Type__c,SVMXC__Group_Member__c,OwnerID,Parent_Work_Order__c,
                Parent_Work_Order__r.BackOfficeReference__c,Parent_Work_Order__r.TECH_WOBackOfficeRecordID__c,SoldToAccount__c,SVMXC__Component__c,SVMXC__Product__c,Project__c,SVMXC__Service_Contract__c,ServiceLine__c,SVMXC__Closed_On__c,
@@ -2231,7 +2255,7 @@ global class WS_Work_Order{
              Map<id,List<SVMXC__RMA_Shipment_Line__c>> porderLineMap = new Map<id,List<SVMXC__RMA_Shipment_Line__c>>();
                 
                wos = [select ID,Name,SVMXC__Company__c,SVMXC__Contact__c,CustomerRequestedDate__c,CustomerRequestedTime__c,BusinessUnit__c, Service_Business_Unit__c,
-               SVMXC__Priority__c,SVMXC__Scheduled_Date_Time__c,WorkOrderGroup__c,WorkOrderGroup__r.BackOfficeReference__c,WorkOrderName__c,
+               Priority__c,SVMXC__Scheduled_Date_Time__c,WorkOrderGroup__c,WorkOrderGroup__r.BackOfficeReference__c,WorkOrderName__c,
                Comments_to_Planner__c,CountryOfBackOffice__c,BackOfficeSystem__c,SVMXC__Order_Status__c,SubStatus__c,Work_Order_Category__c,
                SVMXC__Order_Type__c,WorkOrderSubType__c,IsBillable__c,SVMXC__Billing_Type__c,SVMXC__Group_Member__c,OwnerID,Parent_Work_Order__c,
                Parent_Work_Order__r.BackOfficeReference__c,Parent_Work_Order__r.TECH_WOBackOfficeRecordID__c,SoldToAccount__c,SVMXC__Component__c,SVMXC__Product__c,Project__c,SVMXC__Service_Contract__c,ServiceLine__c,SVMXC__Closed_On__c,
@@ -2966,7 +2990,7 @@ global class WS_Work_Order{
             woresult.WOcurrencyIsCode = wo.CurrencyIsoCode;  
             //woresult.serviceBusinessUnit = wo.BusinessUnit__c;
             woresult.serviceBusinessUnit = wo.Service_Business_Unit__c; // Yassine.B 13/03/2015 - fix with right BU field
-            woresult.priority = wo.SVMXC__Priority__c;
+            woresult.priority = wo.Priority__c;
             woresult.scheduledDateTime = String.valueOf(wo.SVMXC__Scheduled_Date_Time__c);
 
 
@@ -3084,7 +3108,7 @@ global class WS_Work_Order{
         wo.WorkOrderName__c =  wou.workOrderName;
         wo.CustomerRequestedTime__c = wou.customerRequestedTime;
         wo.BusinessUnit__c = wou.serviceBusinessUnit ;
-        wo.SVMXC__Priority__c = wou.priority;
+        wo.Priority__c = wou.priority;
         wo.Comments_to_Planner__c = wou.commentToPlanner;
         wo.CountryOfBackOffice__c = wou.countryOfBackOffice;
         wo.BackOfficeSystem__c = wou.backOfficeSystem;
@@ -3728,7 +3752,7 @@ global class WS_Work_Order{
         }
         if(porderLineMap != null && porderLineMap.size()>0){
         
-            List<SVMXC__RMA_Shipment_Line__c> porderLineList =[select id,Received_Qty__c,SVMXC__RMA_Shipment_Order__c, name,SVMXC__Expected_Quantity2__c ,Shipped_Qty__c ,ShippingStatus__c ,Calculated_plant__c ,SVMXC__Expected_Ship_Date__c ,BackOfficeReference__c ,Carrier__c ,Tracking_number__c, TECH_BOPartsOrderLineRecordId__c,TECH_BOLastUpdateTimestamp__c, BOMaterialReference__c  from SVMXC__RMA_Shipment_Line__c where id in :porderLineMap.keySet() ]; //Yassine.B 09/04/2015
+            List<SVMXC__RMA_Shipment_Line__c> porderLineList =[select id,Received_Qty__c,Received_Date__c,SVMXC__RMA_Shipment_Order__c, name,SVMXC__Expected_Quantity2__c ,Shipped_Qty__c ,ShippingStatus__c ,Calculated_plant__c ,SVMXC__Expected_Ship_Date__c ,BackOfficeReference__c ,Carrier__c ,Tracking_number__c, TECH_BOPartsOrderLineRecordId__c,TECH_BOLastUpdateTimestamp__c, BOMaterialReference__c  from SVMXC__RMA_Shipment_Line__c where id in :porderLineMap.keySet() ]; //Yassine.B 09/04/2015
             Map<String,Plant__c> plantMap = new Map<String,Plant__c>();
             
             if(calculatedPlantSet != null && calculatedPlantSet.size()>0){
@@ -3751,6 +3775,10 @@ global class WS_Work_Order{
                         if(opluint.receivedQuantity != null)
                         {
                             polObj.Received_Qty__c = opluint.receivedQuantity ;
+                        }
+                        if(opluint.receivedDate != null)
+                        {
+                            polObj.Received_Date__c = opluint.receivedDate ;
                         }
                         if(opluint.shippedQuantity != null)
                         {
